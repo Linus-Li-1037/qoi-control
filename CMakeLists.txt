@@ -24,4 +24,4 @@ target_include_directories(${PROJECT_NAME} INTERFACE include ${SZ3_INCLUDES} ${Z
 target_link_libraries(${PROJECT_NAME} INTERFACE ${ZSTD_LIB} ${SZ3_LIB})
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include)
 add_subdirectory(test)
-add_subdirectory(parallel_src)
+# add_subdirectory(parallel_src)

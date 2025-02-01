@@ -27,11 +27,23 @@ int main(int argc, char** argv){
 
     if(data == "GE"){
         refactor_GE<T>(data_file_prefix, rdata_file_prefix);
-        refactor_GE_SZ3<T>(data_file_prefix, rdata_file_prefix);
+        // refactor_GE_SZ3<T>(data_file_prefix, rdata_file_prefix);
         refactor_GE_SZ3_delta<T>(data_file_prefix, rdata_file_prefix);
     }
-    else if(data == "NYX" || data == "Hurricane"){
+    else if(data == "NYX" || data == "Hurricane" || data == "SCALE" || data == "Miranda"){
         refactor_velocities_1D<T>(data_file_prefix, rdata_file_prefix);
+        if(data == "Hurricane"){
+            refactor_Vtot_SZ3_delta<T>(100, 500, 500, data_file_prefix, rdata_file_prefix);
+        }
+        else if(data == "NYX"){
+            refactor_Vtot_SZ3_delta<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
+        }
+        else if(data == "SCALE"){
+            refactor_Vtot_SZ3_delta<T>(98, 1200, 1200, data_file_prefix, rdata_file_prefix);
+        }
+        else if(data == "Miranda"){
+            refactor_Vtot_SZ3_delta<T>(256, 384, 384, data_file_prefix, rdata_file_prefix);
+        }
     }
     else{
         uint32_t n1 = atoi(argv[argv_id++]);
