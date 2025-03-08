@@ -102,7 +102,7 @@ void refactor_GE(const std::string data_file_prefix, const std::string rdata_fil
             num_valid_data ++;
         }
     }
-    std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
+    // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
     std::string mask_file = rdata_file_prefix + "mask.bin";
     MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec, pressure_vec, density_vec};
@@ -132,7 +132,7 @@ void refactor_GE(const std::string data_file_prefix, const std::string rdata_fil
                     buffer[index ++] = vars_vec[i][j];
                 }
             }
-            std::cout << "index = " << index << std::endl;
+            // std::cout << "index = " << index << std::endl;
             refactor.refactor(buffer.data(), dims_masked, target_level, num_bitplanes);            
         } 
         else{
@@ -230,7 +230,7 @@ void refactor_GE_SZ3_delta(const std::string data_file_prefix, const std::string
             num_valid_data ++;
         }
     }
-    std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
+    // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
     // std::string mask_file = rdata_file_prefix + "mask.bin";
     // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec, pressure_vec, density_vec};
@@ -241,7 +241,7 @@ void refactor_GE_SZ3_delta(const std::string data_file_prefix, const std::string
     std::vector<double> value_range(n_vars);
     for(int i=0; i<n_vars; i++){
         value_range[i] = compute_vr(vars_vec[i]);
-        std::cout << "value_range = " << value_range[i] << std::endl;
+        // std::cout << "value_range = " << value_range[i] << std::endl;
     }    
     std::vector<double> rel_ebs;
     const int num_snapshot = 18;
@@ -273,7 +273,7 @@ void refactor_GE_SZ3_delta(const std::string data_file_prefix, const std::string
                 }
                 free(compressed_data);
             }
-            std::cout << "index = " << index << std::endl;
+            // std::cout << "index = " << index << std::endl;
         } 
         else{
             std::vector<Type> data_buffer(vars_vec[i]);
@@ -426,9 +426,9 @@ void refactor_Vtot_SZ3_delta(uint32_t n1, uint32_t n2, uint32_t n3, const std::s
             num_valid_data ++;
         }
     }
-    std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
-    // std::string mask_file = rdata_file_prefix + "mask.bin";
-    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
+    std::string mask_file = rdata_file_prefix + "mask.bin";
+    MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
     std::vector<uint32_t> dims_masked;
     dims_masked.push_back(num_valid_data);
@@ -437,7 +437,7 @@ void refactor_Vtot_SZ3_delta(uint32_t n1, uint32_t n2, uint32_t n3, const std::s
     std::vector<double> value_range(n_vars);
     for(int i=0; i<n_vars; i++){
         value_range[i] = compute_vr(vars_vec[i]);
-        std::cout << "value_range = " << value_range[i] << std::endl;
+        // std::cout << "value_range = " << value_range[i] << std::endl;
     }    
     std::vector<double> rel_ebs;
     const int num_snapshot = 18;
@@ -468,7 +468,7 @@ void refactor_Vtot_SZ3_delta(uint32_t n1, uint32_t n2, uint32_t n3, const std::s
             }
             free(compressed_data);
         }
-        std::cout << "index = " << index << std::endl;
+        // std::cout << "index = " << index << std::endl;
     }
 }
 
@@ -493,7 +493,7 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
             num_valid_data ++;
         }
     }
-    std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
+    // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
     std::string mask_file = rdata_file_prefix + "mask.bin";
     MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
 
@@ -524,7 +524,7 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
                 buffer[index ++] = vars_vec[i][j];
             }
         }
-        std::cout << "index = " << index << std::endl;
+        // std::cout << "index = " << index << std::endl;
         refactor.refactor(buffer.data(), dims_masked, target_level, num_bitplanes);            
     }
 }

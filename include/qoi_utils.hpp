@@ -66,7 +66,7 @@ inline double compute_bound_radical(T x, T a, T eb){
 		}
 	}
 	else{
-		std::cout << "Warning: cannot control error in 1/(x+a)\n";
+		// std::cout << "Warning: cannot control error in 1/(x+a)\n";
 		return 0;		
 	}
 }
@@ -83,7 +83,7 @@ inline double compute_inverse_bound_radical(T x, T a, T eb, T tau){
 		}
 	}
 	else{
-		std::cout << "Warning: cannot control error in 1/(x+a)\n";
+		// std::cout << "Warning: cannot control error in 1/(x+a)\n";
 		return 0;		
 	}
 }
@@ -102,7 +102,7 @@ inline double compute_bound_division(T x, T y, T eb_x, T eb_y){
 		else return e/ (y*(y + eb_y));
 	}
 	else{
-		std::cout << "Warning: cannot control error in x/y\n";
+		// std::cout << "Warning: cannot control error in x/y\n";
 		return 0;
 	}
 }
@@ -267,7 +267,7 @@ void print_info(const std::string& name, const std::vector<T>& vec){
 		if(max < vec[i]) max = vec[i];
 		if(min > vec[i]) min = vec[i];
 	}
-	std::cout << name << ": min value = " << min << ", max value = " << max << ", value range = " << max - min << std::endl;
+	// std::cout << name << ": min value = " << min << ", max value = " << max << ", value range = " << max - min << std::endl;
 }
 
 // template <class T>

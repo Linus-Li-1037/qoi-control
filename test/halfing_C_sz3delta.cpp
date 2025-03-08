@@ -53,7 +53,7 @@ bool halfing_error_C_uniform(const T * P, const T * D, size_t n, const double ta
 		}
 
 	}
-	std::cout << names[2] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << names[2] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		auto i = max_index;
@@ -61,7 +61,7 @@ bool halfing_error_C_uniform(const T * P, const T * D, size_t n, const double ta
         double eb_P = ebs[0];
         double eb_D = ebs[1];
 		while(estimate_error > tau){
-    		std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease\n";
             eb_P = eb_P / 1.5;
             eb_D = eb_D / 1.5;
 			double e_T = c_1 * compute_bound_division(P[i], D[i], eb_P, eb_D);
@@ -125,8 +125,8 @@ int main(int argc, char ** argv){
             std::string rdir_prefix = rdata_file_prefix + varlist[i+3];
             double file_eb = 0.1;
             auto file_ind = find_index(ebs[i]/var_range[i], file_eb);
-            std::cout << "file_ind = " << file_ind << std::endl;
-            std::cout << "Requested relative tolerance = " << ebs[i]/var_range[i] << ", expected tolerance = " << file_eb << "\n"; 
+            // std::cout << "file_ind = " << file_ind << std::endl;
+            // std::cout << "Requested relative tolerance = " << ebs[i]/var_range[i] << ", expected tolerance = " << file_eb << "\n"; 
             // std::cout << "Requested tolerance = " << ebs[i] << ", expected tolerance = " << file_eb * var_range[i] << "\n";
             if(file_ind > current_ind[i]){
                 for(int j=current_ind[i]+1; j<=file_ind; j++){
@@ -148,11 +148,11 @@ int main(int argc, char ** argv){
 	    // MGARD::print_statistics(D_ori.data(), D_dec, num_elements);
 	    error_C = std::vector<double>(num_elements);
 	    error_est_C = std::vector<double>(num_elements);
-		std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    tolerance_met = halfing_error_C_uniform(P_dec, D_dec, num_elements, tau, ebs);
-		std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    // std::cout << names[2] << " requested error = " << tau << std::endl;
 	    max_est_error = print_max_abs(names[2] + " error_est", error_est_C);
 	    max_act_error = print_max_abs(names[2] + " actual error", error_C);

@@ -30,11 +30,11 @@ namespace MDR {
             // if refactor successfully
             if(refactor(target_level, num_bitplanes)){
                 timer.end();
-                timer.print("Refactor");
+                // timer.print("Refactor");
                 timer.start();
                 level_num = writer.write_level_components(level_components, level_sizes);
                 timer.end();
-                timer.print("Write");                
+                // timer.print("Write");                
             }
 
             write_metadata();

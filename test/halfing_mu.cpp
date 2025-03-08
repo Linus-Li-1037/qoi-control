@@ -63,7 +63,7 @@ bool halfing_error_mu_uniform(const T * P, const T * D, size_t n, const double t
 			max_index = i;
 		}
 	}
-	std::cout << names[3] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << names[3] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		auto i = max_index;
@@ -71,7 +71,7 @@ bool halfing_error_mu_uniform(const T * P, const T * D, size_t n, const double t
 		double eb_P = ebs[0];
 		double eb_D = ebs[1];
 		while(estimate_error > tau){
-    		std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease\n";
 			eb_P = eb_P / 1.5;
 			eb_D = eb_D / 1.5;
 			double e_T = c_1 * compute_bound_division(P[i], D[i], eb_P, eb_D);
@@ -161,15 +161,15 @@ int main(int argc, char ** argv){
 	    }
 	    P_dec = reconstructed_vars[0].data();
 	    D_dec = reconstructed_vars[1].data();
-	    MGARD::print_statistics(P_ori.data(), P_dec, num_elements);
-	    MGARD::print_statistics(D_ori.data(), D_dec, num_elements);
+	    // MGARD::print_statistics(P_ori.data(), P_dec, num_elements);
+	    // MGARD::print_statistics(D_ori.data(), D_dec, num_elements);
 	    error_mu = std::vector<double>(num_elements);
 	    error_est_mu = std::vector<double>(num_elements);
-		std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    tolerance_met = halfing_error_mu_uniform(P_dec, D_dec, num_elements, tau, ebs);
-		std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    // std::cout << names[5] << " requested error = " << tau << std::endl;
 	    max_act_error = print_max_abs(names[5] + " error", error_mu);
 	    max_est_error = print_max_abs(names[5] + " error_est", error_est_mu);   	

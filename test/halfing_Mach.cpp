@@ -73,7 +73,7 @@ bool halfing_error_Mach_uniform(const T * Vx, const T * Vy, const T * Vz, const 
 			max_index = i;
 		}
 	}
-	std::cout << names[3] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << names[3] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		auto i = max_index;
@@ -84,7 +84,7 @@ bool halfing_error_Mach_uniform(const T * Vx, const T * Vy, const T * Vz, const 
 		double eb_P = ebs[3];
 		double eb_D = ebs[4];
 		while(estimate_error > tau){
-    		std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease\n";
 			eb_Vx = eb_Vx / 1.5;
 			eb_Vy = eb_Vy / 1.5;
 			eb_Vz = eb_Vz / 1.5; 
@@ -206,18 +206,18 @@ int main(int argc, char ** argv){
 	    Vz_dec = reconstructed_vars[2].data();
 	    P_dec = reconstructed_vars[3].data();
 	    D_dec = reconstructed_vars[4].data();
-	    MGARD::print_statistics(Vx_ori.data(), Vx_dec, num_elements);
-	    MGARD::print_statistics(Vy_ori.data(), Vy_dec, num_elements);
-	    MGARD::print_statistics(Vz_ori.data(), Vz_dec, num_elements);
-	    MGARD::print_statistics(P_ori.data(), P_dec, num_elements);
-	    MGARD::print_statistics(D_ori.data(), D_dec, num_elements);
+	    // MGARD::print_statistics(Vx_ori.data(), Vx_dec, num_elements);
+	    // MGARD::print_statistics(Vy_ori.data(), Vy_dec, num_elements);
+	    // MGARD::print_statistics(Vz_ori.data(), Vz_dec, num_elements);
+	    // MGARD::print_statistics(P_ori.data(), P_dec, num_elements);
+	    // MGARD::print_statistics(D_ori.data(), D_dec, num_elements);
 	    error_Mach = std::vector<double>(num_elements);
 	    error_est_Mach = std::vector<double>(num_elements);
-		std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    tolerance_met = halfing_error_Mach_uniform(Vx_dec, Vy_dec, Vz_dec, P_dec, D_dec, num_elements, mask, tau, ebs);
-		std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    // std::cout << names[3] << " requested error = " << tau << std::endl;
 	    max_act_error = print_max_abs(names[3] + " error", error_Mach);
 	    max_est_error = print_max_abs(names[3] + " error_est", error_est_Mach);   	
