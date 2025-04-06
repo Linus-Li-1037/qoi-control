@@ -12,7 +12,7 @@ using namespace MDR;
 
 int main(int argc, char** argv){
 
-    using T = double;
+    using T = float;
     int argv_id = 1;
     int mode = atoi(argv[argv_id++]);
     std::string data = argv[argv_id++];
@@ -50,6 +50,23 @@ int main(int argc, char** argv){
             }
             else if(data == "S3D"){
                 refactor_Vtot_SZ3_delta<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
+            }
+        }
+        else if (mode == 2){
+            if(data == "Hurricane"){
+                refactor_velocities_3D<T>(100, 500, 500, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "NYX"){
+                refactor_velocities_3D<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "SCALE"){
+                refactor_velocities_3D<T>(98, 1200, 1200, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "Miranda"){
+                refactor_velocities_3D<T>(256, 384, 384, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "S3D"){
+                refactor_velocities_3D<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
             }
         }
     }

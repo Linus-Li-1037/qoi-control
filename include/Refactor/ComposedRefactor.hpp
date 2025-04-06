@@ -78,7 +78,7 @@ namespace MDR {
         bool refactor(uint8_t target_level, uint8_t num_bitplanes){
             uint8_t max_level = log2(*min_element(dimensions.begin(), dimensions.end())) - 1;
             if(target_level > max_level){
-                std::cerr << "Target level is higher than " << max_level << std::endl;
+                std::cerr << "Target level is higher than " << (int) max_level << std::endl;
                 return false;
             }
             // Timer timer;

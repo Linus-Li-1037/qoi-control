@@ -153,9 +153,10 @@ int main(int argc, char ** argv){
         var_range[i] = compute_value_range(vars_vec[i]);
     } 
 
-	struct timespec start, end;
+	struct timespec start, end, halfing_start, halfing_end;
 	int err;
 	double elapsed_time;
+	double halfing_time=0;
 
 	err = clock_gettime(CLOCK_REALTIME, &start);
 
@@ -227,7 +228,10 @@ int main(int argc, char ** argv){
 	    error_est_PT = std::vector<double>(num_elements);
 		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
+		err = clock_gettime(CLOCK_REALTIME, &halfing_start);
 	    tolerance_met = halfing_error_PT_uniform(Vx_dec, Vy_dec, Vz_dec, P_dec, D_dec, num_elements, mask, tau, ebs);
+		err = clock_gettime(CLOCK_REALTIME, &halfing_end);
+		halfing_time = (double)(halfing_end.tv_sec - halfing_start.tv_sec) + (double)(halfing_end.tv_nsec - halfing_start.tv_nsec)/(double)1000000000;
 		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
 	    // std::cout << names[4] << " requested error = " << tau << std::endl;
@@ -251,6 +255,7 @@ int main(int argc, char ** argv){
     std::cout << std::endl;
 	// MDR::print_vec(total_retrieved_size);
 	std::cout << "aggregated cr = " << cr << std::endl;
+	printf("halfing_time = %.6f\n", halfing_time);
 	printf("elapsed_time = %.6f\n", elapsed_time);
 
     return 0;

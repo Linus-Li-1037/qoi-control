@@ -30,6 +30,12 @@ MDR::ComposedReconstructor<T, Decomposer, Interleaver, Encoder, Compressor, Size
     return reconstructor;
 }
 
+template <class T, class Decomposer, class Interleaver, class Encoder, class Compressor, class ErrorEstimator, class SizeInterpreter, class Retriever>
+MDR::SegmentedReconstructor<T, Decomposer, Interleaver, Encoder, Compressor, SizeInterpreter, ErrorEstimator, Retriever> generateSegmentedReconstructor(Decomposer decomposer, Interleaver interleaver, Encoder encoder, Compressor compressor, ErrorEstimator estimator, SizeInterpreter interpreter, Retriever retriever){
+    auto reconstructor = MDR::SegmentedReconstructor<T, Decomposer, Interleaver, Encoder, Compressor, SizeInterpreter, ErrorEstimator, Retriever>(decomposer, interleaver, encoder, compressor, interpreter, retriever);
+    return reconstructor;
+}
+
 const int target_level = 8;
 const int num_bitplanes = 60;
 
@@ -498,6 +504,7 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
     MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
 
     int target_level = 4;
+    uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
 
     std::vector<uint32_t> dims_masked;
     dims_masked.push_back(num_valid_data);
@@ -531,26 +538,30 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
 
 
 template<class Type>
-void refactor_velocities_3D(std::string dataset, uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
+void refactor_velocities_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
     size_t num_elements = 0;
-    auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + dataset + "_velocity_x.dat").c_str(), num_elements);
-    auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + dataset + "_velocity_x.dat").c_str(), num_elements);
-    auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + dataset + "_velocity_x.dat").c_str(), num_elements);
+    std::cout << (data_file_prefix + "VelocityX.dat").c_str() << std::endl;
+    auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityX.dat").c_str(), num_elements);
+    std::cout << (data_file_prefix + "VelocityY.dat").c_str() << std::endl;
+    auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
+    std::cout << (data_file_prefix + "VelocityZ.dat").c_str() << std::endl;
+    auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + "Velocityz.dat").c_str(), num_elements);
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
-    std::vector<std::string> var_list = {dataset + "_velocity_x", dataset + "_velocity_y", dataset + "_velocity_z"};
+    std::vector<std::string> var_list = {"VelocityX", "VelocityY", "VelocityZ"};
     int n_variable = var_list.size();
 
     int target_level = 4;
+    uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
     std::vector<uint32_t> dims = {n1, n2, n3};
 
-    std::vector<unsigned char> mask(num_elements, 0);
-    for(int i=0; i<num_elements; i++){
-        if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
-            mask[i] = 1;
-        }
-    }
-    std::string mask_file = rdata_file_prefix + dataset + "_mask.bin";
-    MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    // std::vector<unsigned char> mask(num_elements, 0);
+    // for(int i=0; i<num_elements; i++){
+    //     if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
+    //         mask[i] = 1;
+    //     }
+    // }
+    // std::string mask_file = rdata_file_prefix + dataset + "_mask.bin";
+    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
 
     for(int i=0; i<n_variable; i++){
         std::string rdir_prefix = rdata_file_prefix + var_list[i];
