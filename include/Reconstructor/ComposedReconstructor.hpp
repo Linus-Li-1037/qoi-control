@@ -12,6 +12,7 @@
 #include "LosslessCompressor/LevelCompressor.hpp"
 #include "RefactorUtils.hpp"
 #include "Timer.hpp"
+#include "mpi.h"
 
 namespace MDR {
     // a decomposition-based scientific data reconstructor: inverse operator of composed refactor
@@ -28,6 +29,7 @@ namespace MDR {
         T * reconstruct(double tolerance, int max_level=-1){
             // Timer timer;
             // timer.start();
+            Timer IO_timer;
             std::vector<std::vector<double>> level_abs_errors;
             uint8_t target_level = level_error_bounds.size() - 1;
             std::vector<std::vector<double>>& level_errors = level_squared_errors;
@@ -55,7 +57,11 @@ namespace MDR {
             if(max_level == -1 || (max_level >= level_num_bitplanes.size())){
                 auto retrieve_sizes = interpreter.interpret_retrieve_size(level_sizes, level_errors, tolerance, level_num_bitplanes);
                 // retrieve data
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.start();
                 level_components = retriever.retrieve_level_components(level_sizes, retrieve_sizes, prev_level_num_bitplanes, level_num_bitplanes);                
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.end();
             }
             else{
                 std::vector<std::vector<uint32_t>> tmp_level_sizes;
@@ -67,12 +73,17 @@ namespace MDR {
                     tmp_level_num_bitplanes.push_back(level_num_bitplanes[i]);
                 }
                 auto retrieve_sizes = interpreter.interpret_retrieve_size(tmp_level_sizes, tmp_level_errors, tolerance, tmp_level_num_bitplanes);
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.start();
                 level_components = retriever.retrieve_level_components(tmp_level_sizes, retrieve_sizes, prev_level_num_bitplanes, tmp_level_num_bitplanes);                
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.end();
                 // add level_num_bitplanes
                 for(int i=0; i<=max_level; i++){
                     level_num_bitplanes[i] = tmp_level_num_bitplanes[i];
                 }
             }
+            IO_time += IO_timer.get();
             // check whether to reconstruct to full resolution
             int skipped_level = 0;
             for(int i=0; i<=target_level; i++){
@@ -173,6 +184,10 @@ namespace MDR {
             return retriever.get_offsets();
         }
 
+        double get_IO_time(){
+            return IO_time;
+        }
+
         ~ComposedReconstructor(){}
 
         void print() const {
@@ -185,8 +200,8 @@ namespace MDR {
         }
     private:
         bool reconstruct(uint8_t target_level, const std::vector<uint8_t>& prev_level_num_bitplanes, bool progressive=true){
-            mgard_x::Timer lossless_timer, decoding_timer, reposition_timer, recomposition_timer, AddND_timer, timer_all;
-            timer_all.start();
+            // mgard_x::Timer lossless_timer, decoding_timer, reposition_timer, recomposition_timer, AddND_timer, timer_all;
+            // timer_all.start();
             auto num_levels = level_num.size();
             auto level_dims = compute_level_dims(dimensions, num_levels - 1);
             auto reconstruct_dimensions = level_dims[target_level];
@@ -200,33 +215,33 @@ namespace MDR {
             std::vector<uint32_t> dims_dummy(reconstruct_dimensions.size(), 0);
             for(int i=0; i<=current_level; i++){
                 if(level_num_bitplanes[i] - prev_level_num_bitplanes[i] > 0){
-                    lossless_timer.start();
+                    // lossless_timer.start();
                     compressor.decompress_level(level_components[i], level_sizes[i], prev_level_num_bitplanes[i], level_num_bitplanes[i] - prev_level_num_bitplanes[i], stopping_indices[i]);
-                    lossless_timer.end();
-                    decoding_timer.start();
+                    // lossless_timer.end();
+                    // decoding_timer.start();
                     int level_exp = 0;
                     if(negabinary) frexp(level_error_bounds[i] / 4, &level_exp);
                     else frexp(level_error_bounds[i], &level_exp);
                     auto level_decoded_data = encoder.progressive_decode(level_components[i], level_elements[i], level_exp, prev_level_num_bitplanes[i], level_num_bitplanes[i] - prev_level_num_bitplanes[i], i);
-                    decoding_timer.end();
+                    // decoding_timer.end();
                     compressor.decompress_release();
-                    reposition_timer.start();
+                    // reposition_timer.start();
                     const std::vector<uint32_t>& prev_dims = (i == 0) ? dims_dummy : level_dims[i - 1];
                     interleaver.reposition(level_decoded_data, reconstruct_dimensions, level_dims[i], prev_dims, data.data(), this->strides);
-                    reposition_timer.end();
+                    // reposition_timer.end();
                     free(level_decoded_data);                    
                 }
             }
             // decompose data to current level
             if(current_level >= 0){
                 if(current_level) {
-                    recomposition_timer.start();
+                    // recomposition_timer.start();
                     decomposer.recompose(data.data(), current_dimensions, current_level, this->strides);
-                    recomposition_timer.end();
+                    // recomposition_timer.end();
                 }
                 // std::cout << "update data\n";
                 // update data with strides
-                AddND_timer.start();
+                // AddND_timer.start();
                 if(current_dimensions.size() == 1){
                     for(int i=0; i<current_dimensions[0]; i++){
                         data[i] += cur_data[i];
@@ -245,51 +260,51 @@ namespace MDR {
                     std::cout << "dimension higher than 4 is not supported in update data\n";
                     exit(-1);
                 }
-                AddND_timer.end();
+                // AddND_timer.end();
             }
             // std::cout << "decompose to target_level\n";
             // decompose data to target level
             // std::cout << "target_level = " << (int) target_level << std::endl;
             for(int i=current_level+1; i<=target_level; i++){
-                lossless_timer.start();
+                // lossless_timer.start();
                 compressor.decompress_level(level_components[i], level_sizes[i], prev_level_num_bitplanes[i], level_num_bitplanes[i] - prev_level_num_bitplanes[i], stopping_indices[i]);
-                lossless_timer.end();
-                decoding_timer.start();
+                // lossless_timer.end();
+                // decoding_timer.start();
                 int level_exp = 0;
                 if(negabinary) frexp(level_error_bounds[i] / 4, &level_exp);
                 else frexp(level_error_bounds[i], &level_exp);
                 auto level_decoded_data = encoder.progressive_decode(level_components[i], level_elements[i], level_exp, prev_level_num_bitplanes[i], level_num_bitplanes[i] - prev_level_num_bitplanes[i], i);
-                decoding_timer.end();
+                // decoding_timer.end();
                 compressor.decompress_release();
-                reposition_timer.start();
+                // reposition_timer.start();
                 const std::vector<uint32_t>& prev_dims = (i == 0) ? dims_dummy : level_dims[i - 1];
                 interleaver.reposition(level_decoded_data, reconstruct_dimensions, level_dims[i], prev_dims, data.data(), this->strides);
-                reposition_timer.end();
+                // reposition_timer.end();
                 free(level_decoded_data);                    
             }
             
-            recomposition_timer.start();
+            // recomposition_timer.start();
             if(current_level >= 0){
                 decomposer.recompose(data.data(), reconstruct_dimensions, target_level - current_level, this->strides);                
             }
             else{
                 decomposer.recompose(data.data(), reconstruct_dimensions, target_level, this->strides);
             }
-            recomposition_timer.end();
+            // recomposition_timer.end();
             current_dimensions = reconstruct_dimensions;
-            timer_all.end();
-            lossless_timer.print("Lossless: ", data.size() * sizeof(T));
-            decoding_timer.print("Decoding: ", data.size() * sizeof(T));
-            reposition_timer.print("Reposition: ", data.size() * sizeof(T));
-            recomposition_timer.print("Recomposition: ", data.size() * sizeof(T));
-            AddND_timer.print("AddND: ", data.size() * sizeof(T));
-            timer_all.print("Low-level reconstruct: ", data.size() * sizeof(T));
-            lossless_timer.clear();
-            decoding_timer.clear();
-            reposition_timer.clear();
-            recomposition_timer.clear();
-            AddND_timer.clear();
-            timer_all.clear();
+            // timer_all.end();
+            // lossless_timer.print("Lossless: ", data.size() * sizeof(T));
+            // decoding_timer.print("Decoding: ", data.size() * sizeof(T));
+            // reposition_timer.print("Reposition: ", data.size() * sizeof(T));
+            // recomposition_timer.print("Recomposition: ", data.size() * sizeof(T));
+            // AddND_timer.print("AddND: ", data.size() * sizeof(T));
+            // timer_all.print("Low-level reconstruct: ", data.size() * sizeof(T));
+            // lossless_timer.clear();
+            // decoding_timer.clear();
+            // reposition_timer.clear();
+            // recomposition_timer.clear();
+            // AddND_timer.clear();
+            // timer_all.clear();
             return true;
         }
 
@@ -327,6 +342,7 @@ namespace MDR {
         int current_level = -1;
         std::vector<uint32_t> strides;
         bool negabinary = true;
+        double IO_time = 0;
     };
 }
 #endif

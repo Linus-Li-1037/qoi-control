@@ -540,17 +540,17 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
 template<class Type>
 void refactor_velocities_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
     size_t num_elements = 0;
-    std::cout << (data_file_prefix + "VelocityX.dat").c_str() << std::endl;
+    // std::cout << (data_file_prefix + "VelocityX.dat").c_str() << std::endl;
     auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityX.dat").c_str(), num_elements);
-    std::cout << (data_file_prefix + "VelocityY.dat").c_str() << std::endl;
+    // std::cout << (data_file_prefix + "VelocityY.dat").c_str() << std::endl;
     auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
-    std::cout << (data_file_prefix + "VelocityZ.dat").c_str() << std::endl;
+    // std::cout << (data_file_prefix + "VelocityZ.dat").c_str() << std::endl;
     auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
     std::vector<std::string> var_list = {"VelocityX", "VelocityY", "VelocityZ"};
     int n_variable = var_list.size();
 
-    int target_level = 8;
+    int target_level = 4;
     uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
     std::vector<uint32_t> dims = {n1, n2, n3};
 

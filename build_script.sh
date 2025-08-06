@@ -43,7 +43,7 @@ git clone https://github.com/ornladios/ADIOS2.git
 cd ADIOS2
 mkdir -p adios2-build && mkdir -p adios2-install
 cd adios2-build
-cmake -DADIOS2_USE_MPI=OFF -DADIOS2_USE_SZ=OFF -DCMAKE_INSTALL_PREFIX=${external_dir}/ADIOS2/adios2-install ..
+cmake -DADIOS2_USE_MPI=OFF -DADIOS2_USE_SZ=OFF -DADIOS2_USE_Fortran=OFF -DCMAKE_INSTALL_PREFIX=${external_dir}/ADIOS2/adios2-install ..
 make -j 8
 make install
 
