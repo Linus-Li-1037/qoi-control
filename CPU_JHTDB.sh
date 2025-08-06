@@ -63,4 +63,6 @@ for error_bound in "${error_bounds[@]}"; do
     echo "Request eb = $error_bound, $bitrate, $readtime, $time, $requested_max_error, $est_max_error, $real_max_error" >> $output_file
 done
 
+cat $output_file
 rm $tmp_file
+rm $output_file
