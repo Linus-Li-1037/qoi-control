@@ -190,7 +190,7 @@ int main(int argc, char ** argv){
 	local_elapsed_time = -MPI_Wtime();
     while((!tolerance_met) && (iter < max_iter)){
 			iter ++;
-			std::cout << "*rank " << rank << ", iter " << iter << std::endl;
+			// std::cout << "*rank " << rank << ", iter " << iter << std::endl;
 			total_size = 0;
 			for(int i=0; i<n_variable; i++){
 				auto reconstructed_data = reconstructors[i].progressive_reconstruct(ebs[i], -1);
