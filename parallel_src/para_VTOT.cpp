@@ -205,7 +205,7 @@ int main(int argc, char ** argv){
 			tolerance_met = halfing_error_V_TOT_uniform(Vx_dec, Vy_dec, Vz_dec, num_elements, tau, ebs);
     }
 	for(int i=iter; i<max_iter; i++){
-		std::cout << "#rank " << rank << ", iter " << iter << std::endl;
+		// std::cout << "#rank " << rank << ", iter " << iter << std::endl;
 		for(int i=0; i<n_variable; i++) {
 			MPI_Barrier(MPI_COMM_WORLD);
 			MPI_Barrier(MPI_COMM_WORLD);
