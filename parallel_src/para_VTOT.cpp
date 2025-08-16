@@ -167,7 +167,7 @@ int main(int argc, char ** argv){
         std::string metadata_file = rdir_prefix + "metadata.bin";
 		std::vector<std::string> files;
 		for(int i=0; i<num_levels; i++){
-			std::string filename = rdir_prefix + "level_" + std::to_string(i) + ".bin";
+			std::string filename = rdir_prefix + "level_" + std::to_string(i); // + ".bin";
 			files.push_back(filename);
 		}
         auto decomposer = MGARDHierarchicalDecomposer<T>();

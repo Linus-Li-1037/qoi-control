@@ -14,8 +14,6 @@
 # You have a directory named JHTDB with in it exists under current directory.
 # make sure you have enough space (~128GB) to store JHTDB and refactored data
 
-cd /ccs/home/xinliang/Frontier/test_MDR/qoi-control/build
-
 set -x
 set -e
 
@@ -36,9 +34,8 @@ done
 
 error_bounds=($(printf "%s\n" "${error_bounds[@]}" | sort -nr))
 
-build_dir=$(ls | grep '^build-' | head -n 1)
-refactor="./$build_dir/parallel_src/para_refactor"
-reconstructor="./$build_dir/parallel_src/para_VTOT"
+refactor="./build/parallel_src/para_refactor"
+reconstructor="./build/parallel_src/para_VTOT"
 
 output_file="CPU_JHTDB_output.txt"
 tmp_file="CPU_JHTDB_output.txt"

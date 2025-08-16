@@ -12,21 +12,55 @@ namespace MDR {
             offsets = std::vector<uint32_t>(level_files.size(), 0);
         }
 
+        // std::vector<std::vector<const uint8_t*>> retrieve_level_components(const std::vector<std::vector<uint32_t>>& level_sizes, const std::vector<uint32_t>& retrieve_sizes, const std::vector<uint8_t>& prev_level_num_bitplanes, const std::vector<uint8_t>& level_num_bitplanes){
+        //     // assert(offsets.size() == retrieve_sizes.size());
+        //     release();
+        //     uint32_t total_retrieve_size = 0;
+        //     for(int i=0; i<retrieve_sizes.size(); i++){
+        //         // std::cout << "Retrieve " << +level_num_bitplanes[i] << " (" << +(level_num_bitplanes[i] - prev_level_num_bitplanes[i]) << " more) bitplanes from level " << i << std::endl;
+        //         FILE * file = fopen(level_files[i].c_str(), "r");
+        //         if(fseek(file, offsets[i], SEEK_SET)){
+        //             std::cerr << "Errors in fseek while retrieving from file" << std::endl;
+        //         }
+        //         uint8_t * buffer = (uint8_t *) malloc(retrieve_sizes[i]);
+        //         fread(buffer, sizeof(uint8_t), retrieve_sizes[i], file);
+        //         concated_level_components.push_back(buffer);
+        //         fclose(file);
+        //         offsets[i] += retrieve_sizes[i];
+        //         total_retrieve_size += offsets[i];
+        //     }
+        //     // std::cout << "Total retrieve size = " << total_retrieve_size << std::endl;
+        //     retrieved_size = total_retrieve_size;
+        //     return interleave_level_components(level_sizes, prev_level_num_bitplanes, level_num_bitplanes);
+        // }
+
         std::vector<std::vector<const uint8_t*>> retrieve_level_components(const std::vector<std::vector<uint32_t>>& level_sizes, const std::vector<uint32_t>& retrieve_sizes, const std::vector<uint8_t>& prev_level_num_bitplanes, const std::vector<uint8_t>& level_num_bitplanes){
             // assert(offsets.size() == retrieve_sizes.size());
             release();
             uint32_t total_retrieve_size = 0;
-            for(int i=0; i<retrieve_sizes.size(); i++){
-                // std::cout << "Retrieve " << +level_num_bitplanes[i] << " (" << +(level_num_bitplanes[i] - prev_level_num_bitplanes[i]) << " more) bitplanes from level " << i << std::endl;
-                FILE * file = fopen(level_files[i].c_str(), "r");
-                if(fseek(file, offsets[i], SEEK_SET)){
-                    std::cerr << "Errors in fseek while retrieving from file" << std::endl;
+            // for(int i=0; i<retrieve_sizes.size(); i++){
+            //     // std::cout << "Retrieve " << +level_num_bitplanes[i] << " (" << +(level_num_bitplanes[i] - prev_level_num_bitplanes[i]) << " more) bitplanes from level " << i << std::endl;
+            //     FILE * file = fopen(level_files[i].c_str(), "r");
+            //     if(fseek(file, offsets[i], SEEK_SET)){
+            //         std::cerr << "Errors in fseek while retrieving from file" << std::endl;
+            //     }
+            //     uint8_t * buffer = (uint8_t *) malloc(retrieve_sizes[i]);
+            //     fread(buffer, sizeof(uint8_t), retrieve_sizes[i], file);
+            //     concated_level_components.push_back(buffer);
+            //     fclose(file);
+            //     offsets[i] += retrieve_sizes[i];
+            //     total_retrieve_size += offsets[i];
+            // }
+            for(int i=0; i<level_num_bitplanes.size(); i++){
+                for(int j=prev_level_num_bitplanes[i]; j<level_num_bitplanes[i]; j++){
+                    std::string file_path = level_files[i] + "_" + std::to_string(j) + ".bin";
+                    FILE * file = fopen(file_path.c_str(), "r");
+                    uint8_t * buffer = (uint8_t *) malloc(level_sizes[i][j]);
+                    fread(buffer, sizeof(uint8_t), level_sizes[i][j], file);
+                    concated_level_components.push_back(buffer);
+                    fclose(file);
+                    offsets[i] += level_sizes[i][j];
                 }
-                uint8_t * buffer = (uint8_t *) malloc(retrieve_sizes[i]);
-                fread(buffer, sizeof(uint8_t), retrieve_sizes[i], file);
-                concated_level_components.push_back(buffer);
-                fclose(file);
-                offsets[i] += retrieve_sizes[i];
                 total_retrieve_size += offsets[i];
             }
             // std::cout << "Total retrieve size = " << total_retrieve_size << std::endl;
@@ -66,14 +100,29 @@ namespace MDR {
             std::cout << "File retriever." << std::endl;
         }
     private:
+        // std::vector<std::vector<const uint8_t*>> interleave_level_components(const std::vector<std::vector<uint32_t>>& level_sizes, const std::vector<uint8_t>& prev_level_num_bitplanes, const std::vector<uint8_t>& level_num_bitplanes){
+        //     std::vector<std::vector<const uint8_t*>> level_components;
+        //     for(int i=0; i<level_num_bitplanes.size(); i++){
+        //         const uint8_t * pos = concated_level_components[i];
+        //         std::vector<const uint8_t*> interleaved_level;
+        //         for(int j=prev_level_num_bitplanes[i]; j<level_num_bitplanes[i]; j++){
+        //             interleaved_level.push_back(pos);
+        //             pos += level_sizes[i][j];
+        //         }
+        //         level_components.push_back(interleaved_level);
+        //     }
+        //     return level_components;
+        // }
+
         std::vector<std::vector<const uint8_t*>> interleave_level_components(const std::vector<std::vector<uint32_t>>& level_sizes, const std::vector<uint8_t>& prev_level_num_bitplanes, const std::vector<uint8_t>& level_num_bitplanes){
             std::vector<std::vector<const uint8_t*>> level_components;
+            uint32_t index = 0;
             for(int i=0; i<level_num_bitplanes.size(); i++){
-                const uint8_t * pos = concated_level_components[i];
+                // const uint8_t * pos = concated_level_components[i];
                 std::vector<const uint8_t*> interleaved_level;
                 for(int j=prev_level_num_bitplanes[i]; j<level_num_bitplanes[i]; j++){
-                    interleaved_level.push_back(pos);
-                    pos += level_sizes[i][j];
+                    interleaved_level.push_back(concated_level_components[index++]);
+                    // pos += level_sizes[i][j];
                 }
                 level_components.push_back(interleaved_level);
             }

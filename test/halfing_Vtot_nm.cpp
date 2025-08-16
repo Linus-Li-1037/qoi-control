@@ -128,7 +128,7 @@ int main(int argc, char ** argv){
         std::vector<std::string> files;
         int num_levels = 5;
         for(int i=0; i<num_levels; i++){
-            std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i) + ".bin";
+            std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i); // + ".bin";
             files.push_back(filename);
         }
         auto decomposer = MGARDHierarchicalDecomposer<T>();

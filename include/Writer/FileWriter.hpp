@@ -10,23 +10,49 @@ namespace MDR {
     public:
         ConcatLevelFileWriter(const std::string& metadata_file, const std::vector<std::string>& level_files) : metadata_file(metadata_file), level_files(level_files) {}
 
+        // std::vector<uint32_t> write_level_components(const std::vector<std::vector<uint8_t*>>& level_components, const std::vector<std::vector<uint32_t>>& level_sizes) const {
+        //     std::vector<uint32_t> level_num;
+        //     for(int i=0; i<level_components.size(); i++){
+        //         uint32_t concated_level_size = 0;
+        //         for(int j=0; j<level_components[i].size(); j++){
+        //             concated_level_size += level_sizes[i][j];
+        //         }
+        //         uint8_t * concated_level_data = (uint8_t *) malloc(concated_level_size);
+        //         uint8_t * concated_level_data_pos = concated_level_data;
+        //         for(int j=0; j<level_components[i].size(); j++){
+        //             memcpy(concated_level_data_pos, level_components[i][j], level_sizes[i][j]);
+        //             concated_level_data_pos += level_sizes[i][j];
+        //         }
+        //         FILE * file = fopen((level_files[i]).c_str(), "w");
+        //         fwrite(concated_level_data, 1, concated_level_size, file);
+        //         fclose(file);
+        //         free(concated_level_data);
+        //         level_num.push_back(1);
+        //     }
+        //     return level_num;
+        // }
+
         std::vector<uint32_t> write_level_components(const std::vector<std::vector<uint8_t*>>& level_components, const std::vector<std::vector<uint32_t>>& level_sizes) const {
             std::vector<uint32_t> level_num;
             for(int i=0; i<level_components.size(); i++){
-                uint32_t concated_level_size = 0;
+                // uint32_t concated_level_size = 0;
+                // for(int j=0; j<level_components[i].size(); j++){
+                //     concated_level_size += level_sizes[i][j];
+                // }
+                // uint8_t * concated_level_data = (uint8_t *) malloc(concated_level_size);
+                // uint8_t * concated_level_data_pos = concated_level_data;
                 for(int j=0; j<level_components[i].size(); j++){
-                    concated_level_size += level_sizes[i][j];
+                    // memcpy(concated_level_data_pos, level_components[i][j], level_sizes[i][j]);
+                    // concated_level_data_pos += level_sizes[i][j];
+                    std::string file_path = level_files[i] + "_" + std::to_string(j) + ".bin";
+                    FILE * file = fopen(file_path.c_str(), "w");
+                    fwrite(level_components[i][j], 1, level_sizes[i][j], file);
+                    fclose(file);
                 }
-                uint8_t * concated_level_data = (uint8_t *) malloc(concated_level_size);
-                uint8_t * concated_level_data_pos = concated_level_data;
-                for(int j=0; j<level_components[i].size(); j++){
-                    memcpy(concated_level_data_pos, level_components[i][j], level_sizes[i][j]);
-                    concated_level_data_pos += level_sizes[i][j];
-                }
-                FILE * file = fopen((level_files[i]).c_str(), "w");
-                fwrite(concated_level_data, 1, concated_level_size, file);
-                fclose(file);
-                free(concated_level_data);
+                // FILE * file = fopen((level_files[i]).c_str(), "w");
+                // fwrite(concated_level_data, 1, concated_level_size, file);
+                // fclose(file);
+                // free(concated_level_data);
                 level_num.push_back(1);
             }
             return level_num;

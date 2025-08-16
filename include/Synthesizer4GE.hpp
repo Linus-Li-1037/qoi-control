@@ -569,7 +569,7 @@ void refactor_velocities_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::st
         std::vector<std::string> files;
         int num_levels = target_level + 1;
         for(int i=0; i<num_levels; i++){
-            std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i) + ".bin";
+            std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i); // + ".bin";
             files.push_back(filename);
         }
         auto decomposer = MDR::MGARDHierarchicalDecomposer<Type>();
