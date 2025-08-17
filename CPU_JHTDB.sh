@@ -38,7 +38,7 @@ refactor="./build/parallel_src/para_refactor"
 reconstructor="./build/parallel_src/para_VTOT"
 
 output_file="CPU_JHTDB_output.txt"
-tmp_file="CPU_JHTDB_output.txt"
+tmp_file="CPU_JHTDB_tmp_output.txt"
 >$output_file
 >$tmp_file
 
