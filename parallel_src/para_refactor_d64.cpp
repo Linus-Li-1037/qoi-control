@@ -7,16 +7,26 @@
 #include <numeric>
 #include "utils.hpp"
 #include "Synthesizer4GE.hpp"
+#include "mpi.h"
+#include <sstream>
 
 using namespace MDR;
 
 int main(int argc, char** argv){
+    
+    MPI_Init(&argc, &argv);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    std::ostringstream oss;
+    oss << rank;
 
     using T = double;
     int argv_id = 1;
     int mode = atoi(argv[argv_id++]);
     std::string data = argv[argv_id++];
 	std::string data_prefix_path = argv[argv_id++];
+    data_prefix_path += oss.str();
+    // std::cout << data_prefix_path << std::endl;
 	std::string data_file_prefix = data_prefix_path + "/data/";
 	std::string rdata_file_prefix = data_prefix_path + "/refactor/";
 
@@ -24,14 +34,14 @@ int main(int argc, char** argv){
 	int err;
 	double elapsed_time;
 
-	err = clock_gettime(CLOCK_REALTIME, &start);
+	elapsed_time = - MPI_Wtime();
 
     if(data == "GE"){
         if (mode == 1) refactor_GE<T>(data_file_prefix, rdata_file_prefix);
         // refactor_GE_SZ3<T>(data_file_prefix, rdata_file_prefix);
         else refactor_GE_SZ3_delta<T>(data_file_prefix, rdata_file_prefix);
     }
-    else if(data == "NYX" || data == "Hurricane" || data == "SCALE" || data == "Miranda" || data == "S3D"){
+    else if(data == "NYX" || data == "Hurricane" || data == "SCALE" || data == "Miranda" || data == "S3D" || data == "JHTDB"){
         if (mode == 1){
             refactor_velocities_1D<T>(data_file_prefix, rdata_file_prefix);
         }
@@ -68,6 +78,9 @@ int main(int argc, char** argv){
             else if(data == "S3D"){
                 refactor_velocities_3D<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
             }
+            else if(data == "JHTDB"){
+                refactor_velocities_3D<T>(256, 512, 512, data_file_prefix, rdata_file_prefix);
+            }
         }
     }
     // else{
@@ -81,10 +94,13 @@ int main(int argc, char** argv){
     //     }
     // }
     
-	err = clock_gettime(CLOCK_REALTIME, &end);
-	elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;
-	printf("elapsed_time = %.6f\n", elapsed_time);
-
+	elapsed_time += MPI_Wtime();
+    double max_elapsed_time;
+    MPI_Reduce(&elapsed_time, &max_elapsed_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	// elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;
+	// printf("elapsed_time = %.6f\n", elapsed_time);
+    if(rank==0) printf("max_elapsed_time = %.6f\n", max_elapsed_time);
+    MPI_Finalize();
     return 0;
 
 }

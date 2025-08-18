@@ -153,14 +153,15 @@ int main(int argc, char ** argv){
     double tau = compute_value_range(Mach)*target_rel_eb;
 
     std::string mask_file = rdata_file_prefix + "mask.bin";
-    size_t num_valid_data = 0;
-    auto mask = MGARD::readfile<unsigned char>(mask_file.c_str(), num_valid_data);
+    uint32_t mask_file_size = 0;
+    auto mask = readmask(mask_file.c_str(), mask_file_size);
+
     std::vector<MDR::ComposedReconstructor<T, MGARDHierarchicalDecomposer<T>, DirectInterleaver<T>, PerBitBPEncoder<T, uint32_t>, AdaptiveLevelCompressor, SignExcludeGreedyBasedSizeInterpreter<MaxErrorEstimatorHB<T>>, MaxErrorEstimatorHB<T>, ConcatLevelFileRetriever>> reconstructors;
     for(int i=0; i<n_variable; i++){
         std::string rdir_prefix = rdata_file_prefix + varlist[i];
         std::string metadata_file = rdir_prefix + "_refactored/metadata.bin";
         std::vector<std::string> files;
-        int num_levels = 9;
+        int num_levels = 5;
         for(int i=0; i<num_levels; i++){
             std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i) + ".bin";
             files.push_back(filename);
@@ -179,7 +180,7 @@ int main(int argc, char ** argv){
 	std::vector<size_t> total_retrieved_size(n_variable, 0);
 
     int iter = 0;
-    int max_iter = 5;
+    int max_iter = 30;
 	bool tolerance_met = false;
 	double max_act_error = 0, max_est_error = 0;
     while((!tolerance_met) && (iter < max_iter)){
@@ -225,12 +226,13 @@ int main(int argc, char ** argv){
 	err = clock_gettime(CLOCK_REALTIME, &end);
 	elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;
 
-	std::cout << "requested error = " << tau << std::endl;
+	std::cout << "requested_error = " << tau << std::endl;
 	std::cout << "max_est_error = " << max_est_error << std::endl;
 	std::cout << "max_act_error = " << max_act_error << std::endl;
 	std::cout << "iter = " << iter << std::endl;
    
-   	size_t total_size = std::accumulate(total_retrieved_size.begin(), total_retrieved_size.end(), 0);
+	size_t total_size = std::accumulate(total_retrieved_size.begin(), total_retrieved_size.end(), size_t(0)) + mask_file_size;
+	std::cout << "total_size = " << total_size << ", mask_size = " << mask_file_size << std::endl;
 	double cr = n_variable * num_elements * sizeof(T) * 1.0 / total_size;
 	std::cout << "each retrieved size:";
     for(int i=0; i<n_variable; i++){
@@ -239,6 +241,7 @@ int main(int argc, char ** argv){
     std::cout << std::endl;
 	// MDR::print_vec(total_retrieved_size);
 	std::cout << "aggregated cr = " << cr << std::endl;
+	std::cout << "bitrate = " << ((sizeof(T) * 8) / cr) << std::endl;
 	printf("elapsed_time = %.6f\n", elapsed_time);
 
     return 0;

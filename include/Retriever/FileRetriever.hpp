@@ -38,6 +38,7 @@ namespace MDR {
             FILE * file = fopen(metadata_file.c_str(), "r");
             fseek(file, 0, SEEK_END);
             uint32_t num_bytes = ftell(file);
+            metadata_size = num_bytes;
             rewind(file);
             uint8_t * metadata = (uint8_t *) malloc(num_bytes);
             fread(metadata, 1, num_bytes, file);
@@ -53,7 +54,11 @@ namespace MDR {
         }
 
         size_t get_retrieved_size(){
-            return retrieved_size;
+            return metadata_size + retrieved_size;
+        }
+
+        size_t get_metadata_size(){
+            return metadata_size;
         }
         
         std::vector<uint32_t> get_offsets(){
@@ -85,6 +90,7 @@ namespace MDR {
         std::vector<uint32_t> offsets;
         std::vector<uint8_t*> concated_level_components;
         size_t retrieved_size = 0;
+        mutable size_t metadata_size = 0;
     };
 }
 #endif

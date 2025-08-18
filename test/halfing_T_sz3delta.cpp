@@ -106,10 +106,10 @@ int main(int argc, char ** argv){
     double tau = compute_value_range(Temp)*target_rel_eb;
 
     std::vector<std::vector<T>> reconstructed_vars(n_variable, std::vector<double>(num_elements));
-	std::vector<size_t> total_retrieved_sizes(n_variable, 0);
+	std::vector<size_t> total_retrieved_size(n_variable, 0);
 
     int iter = 0;
-    int max_iter = 5;
+    int max_iter = 30;
 	bool tolerance_met = false;
 	double max_act_error = 0, max_est_error = 0;
     std::vector<int> current_ind(n_variable, -1);
@@ -127,7 +127,7 @@ int main(int argc, char ** argv){
                     std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
                     size_t n = 0;
                     auto cmpData = MGARD::readfile<char>(filename.c_str(), n);
-                    total_retrieved_sizes[i] += n;
+                    total_retrieved_size[i] += n;
                     SZ3_decompress(cmpData.data(), n, reconstructed_data);
 					for(int j=0; j<num_elements; j++){
 						reconstructed_vars[i][j] += reconstructed_data[j];
@@ -154,20 +154,21 @@ int main(int argc, char ** argv){
 	err = clock_gettime(CLOCK_REALTIME, &end);
 	elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;
 
-	std::cout << "requested error = " << tau << std::endl;
+	std::cout << "requested_error = " << tau << std::endl;
 	std::cout << "max_est_error = " << max_est_error << std::endl;
 	std::cout << "max_act_error = " << max_act_error << std::endl;
     free(reconstructed_data);
 	std::cout << "iter = " << iter << std::endl;
 	std::cout << "each retrieved size:";
     for(int i=0; i<n_variable; i++){
-        std::cout << total_retrieved_sizes[i] << ", ";
+        std::cout << total_retrieved_size[i] << ", ";
     }
     std::cout << std::endl;
 	// MDR::print_vec(total_retrieved_size);
-	size_t total_size = std::accumulate(total_retrieved_sizes.begin(), total_retrieved_sizes.end(), 0);
+	size_t total_size = std::accumulate(total_retrieved_size.begin(), total_retrieved_size.end(), size_t(0));
 	double cr = n_variable * num_elements * sizeof(T) * 1.0 / total_size;
 	std::cout << "aggregated cr = " << cr << std::endl;
+	std::cout << "bitrate = " << ((sizeof(T) * 8) / cr) << std::endl;
 	printf("elapsed_time = %.6f\n", elapsed_time);
 
     return 0;

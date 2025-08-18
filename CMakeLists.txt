@@ -1,10 +1,11 @@
 cmake_minimum_required (VERSION 3.0)
-set (CMAKE_CUDA_ARCHITECTURES 75)
+# set (CMAKE_CUDA_ARCHITECTURES 75)
 project(CQOI VERSION 0.0.0.1 LANGUAGES C CXX)
 set (CMAKE_CXX_STANDARD 17)
 set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set (CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set (CMAKE_CXX_FLAGS "-g -O3")
-set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math")
+# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math")
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(LIB_DIR "lib64")
@@ -20,6 +21,8 @@ find_library(SZ3_LIB SZ3 HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/build/s
 set (ZSTD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/tools/zstd")
 set (SZ3_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/include")
 set (MGARDx_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/MGARDx/install/include")
+
+find_package(MPI REQUIRED)
 
 add_library(${PROJECT_NAME} INTERFACE)
 target_include_directories(${PROJECT_NAME} INTERFACE include ${SZ3_INCLUDES} ${ZSTD_INCLUDES})
