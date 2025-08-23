@@ -4,6 +4,7 @@ function(add_my_executable_prl target source)
     add_executable(${target} ${source})
     target_include_directories(${target} PRIVATE ${MDR_INCLUDES} ${MGARDx_INCLUDES} ${SZ3_INCLUDES} ${ZSTD_INCLUDES} ${MPI_INCLUDE_PATH})
     target_link_libraries(${target} PRIVATE ${PROJECT_NAME} adios2::adios2 ${SZ3_LIB} ${ZSTD_LIB} MPI::MPI_CXX)
+    target_compile_definitions(${target} PRIVATE USE_MPI)
 endfunction()
 
 

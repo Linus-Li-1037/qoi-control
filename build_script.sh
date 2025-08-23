@@ -5,13 +5,13 @@ external_dir=${source_dir}/external
 mkdir -p external
 cd ${external_dir}
 # build SZ (to use ZSTD compressor)
-git clone https://github.com/szcompressor/SZ.git
-cd SZ
-git reset --hard f48d2f27a5470a28e900db9b46bb3344a2bc211f
+git clone https://github.com/szcompressor/SZ2.git
+cd SZ2
+# git reset --hard f48d2f27a5470a28e900db9b46bb3344a2bc211f
 mkdir -p build
 mkdir -p install
 cd build
-cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX=${external_dir}/SZ/install ..
+cmake -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX=${external_dir}/SZ2/install ..
 make -j 8
 make install
 
@@ -19,6 +19,7 @@ make install
 cd ${external_dir}
 git clone https://github.com/szcompressor/SZ3.git
 cd SZ3
+git reset --hard 90c66bed1c04e701442ecb104b912548fcfabee9
 cp -r ${source_dir}/SZ3_src src
 cp ${source_dir}/SZ3_CMakeLists.txt CMakeLists.txt
 mkdir -p build

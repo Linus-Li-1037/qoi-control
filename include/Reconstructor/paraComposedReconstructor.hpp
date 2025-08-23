@@ -1,5 +1,5 @@
-#ifndef _MDR_COMPOSED_RECONSTRUCTOR_HPP
-#define _MDR_COMPOSED_RECONSTRUCTOR_HPP
+#ifndef _MDR_PARA_COMPOSED_RECONSTRUCTOR_HPP
+#define _MDR_PARA_COMPOSED_RECONSTRUCTOR_HPP
 
 #include "ReconstructorInterface.hpp"
 #include "Decomposer/Decomposer.hpp"
@@ -12,13 +12,14 @@
 #include "LosslessCompressor/LevelCompressor.hpp"
 #include "RefactorUtils.hpp"
 #include "Timer.hpp"
+#include "mpi.h"
 
 namespace MDR {
     // a decomposition-based scientific data reconstructor: inverse operator of composed refactor
     template<class T, class Decomposer, class Interleaver, class Encoder, class Compressor, class SizeInterpreter, class ErrorEstimator, class Retriever>
-    class ComposedReconstructor : public concepts::ReconstructorInterface<T> {
+    class paraComposedReconstructor : public concepts::ReconstructorInterface<T> {
     public:
-        ComposedReconstructor(Decomposer decomposer, Interleaver interleaver, Encoder encoder, Compressor compressor, SizeInterpreter interpreter, Retriever retriever)
+        paraComposedReconstructor(Decomposer decomposer, Interleaver interleaver, Encoder encoder, Compressor compressor, SizeInterpreter interpreter, Retriever retriever)
             : decomposer(decomposer), interleaver(interleaver), encoder(encoder), compressor(compressor), interpreter(interpreter), retriever(retriever){}
 
         T * reconstruct(double tolerance){
@@ -56,7 +57,11 @@ namespace MDR {
             if(max_level == -1 || (max_level >= level_num_bitplanes.size())){
                 auto retrieve_sizes = interpreter.interpret_retrieve_size(level_sizes, level_errors, tolerance, level_num_bitplanes);
                 // retrieve data
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.start();
                 level_components = retriever.retrieve_level_components(level_sizes, retrieve_sizes, prev_level_num_bitplanes, level_num_bitplanes);                
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.end();
             }
             else{
                 std::vector<std::vector<uint32_t>> tmp_level_sizes;
@@ -68,7 +73,11 @@ namespace MDR {
                     tmp_level_num_bitplanes.push_back(level_num_bitplanes[i]);
                 }
                 auto retrieve_sizes = interpreter.interpret_retrieve_size(tmp_level_sizes, tmp_level_errors, tolerance, tmp_level_num_bitplanes);
-                level_components = retriever.retrieve_level_components(tmp_level_sizes, retrieve_sizes, prev_level_num_bitplanes, tmp_level_num_bitplanes);
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.start();
+                level_components = retriever.retrieve_level_components(tmp_level_sizes, retrieve_sizes, prev_level_num_bitplanes, tmp_level_num_bitplanes);                
+                MPI_Barrier(MPI_COMM_WORLD);
+                IO_timer.end();
                 // add level_num_bitplanes
                 for(int i=0; i<=max_level; i++){
                     level_num_bitplanes[i] = tmp_level_num_bitplanes[i];
@@ -179,7 +188,7 @@ namespace MDR {
             return IO_time;
         }
 
-        ~ComposedReconstructor(){}
+        ~paraComposedReconstructor(){}
 
         void print() const {
             std::cout << "Composed reconstructor with the following components." << std::endl;

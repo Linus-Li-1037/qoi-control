@@ -7,7 +7,7 @@ set(CMAKE_CXX_FLAGS "-O3")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp)
 
-find_library(ZSTD_LIBS zstd HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../SZ/install/lib")
-set(ZSTD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../SZ/install/include")
+find_library(ZSTD_LIBS zstd HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install/lib64")
+set(ZSTD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install/include")
 
 add_subdirectory(src)

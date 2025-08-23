@@ -4,4 +4,8 @@
 #include "ComposedReconstructor.hpp"
 #include "SegmentedReconstructor.hpp"
 
+#ifdef USE_MPI
+#include "paraComposedReconstructor.hpp"
+#endif
+
 #endif
