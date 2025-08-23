@@ -1,33 +1,65 @@
-cmake_minimum_required (VERSION 3.0)
-# set (CMAKE_CUDA_ARCHITECTURES 75)
+cmake_minimum_required(VERSION 3.12)
 project(CQOI VERSION 0.0.0.1 LANGUAGES C CXX)
-set (CMAKE_CXX_STANDARD 17)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
-set (CMAKE_CXX_FLAGS "-g -O3")
-# set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -O3 --use_fast_math")
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_FLAGS "-g -O3")
 
 include(GNUInstallDirs)
-message(STATUS "CMAKE_INSTALL_LIBDIR=${CMAKE_INSTALL_LIBDIR}")
+message(STATUS "CMAKE_INSTALL_LIBDIR = ${CMAKE_INSTALL_LIBDIR}")
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    set(LIB_DIR "lib64")
-elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-    set(LIB_DIR "lib")
-else ()
-    message(FATAL_ERROR "Unsupported operating system: ${CMAKE_SYSTEM_NAME}")
-endif ()
+find_package(ADIOS2 REQUIRED CONFIG
+  HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/ADIOS2/adios2-install"
+  PATH_SUFFIXES ${CMAKE_INSTALL_LIBDIR}/cmake/adios2
+)
 
-find_package(ADIOS2 REQUIRED HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/ADIOS2/adios2-install/${LIB_DIR}/cmake/adios2")
-find_library(ZSTD_LIB zstd HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ2/install/lib64/${LIB_DIR}")
-find_library(SZ3_LIB SZ3 HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/build/src")
-set (ZSTD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ2/install/include")
-set (SZ3_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/include")
+find_path(ZSTD_INCLUDE_DIR NAMES zstd.h
+  HINTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ2/install/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/tools/zstd/lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/tools/zstd/lib/common"
+    /usr/include /usr/local/include
+)
+
+find_library(ZSTD_LIBRARY NAMES zstd libzstd
+  HINTS "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ2/install"
+  PATH_SUFFIXES lib ${CMAKE_INSTALL_LIBDIR}
+)
+
+if(NOT ZSTD_INCLUDE_DIR OR NOT ZSTD_LIBRARY)
+  message(FATAL_ERROR
+    "Could not find zstd: header=${ZSTD_INCLUDE_DIR}, lib=${ZSTD_LIBRARY}\n"
+    "Please ensure libzstd is installed or built in SZ2/SZ3.")
+endif()
+
+find_library(SZ3_LIBRARY NAMES SZ3 sz3
+  HINTS
+    "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/build"
+  PATH_SUFFIXES lib src
+)
+
+set(SZ3_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external/SZ3/include")
+
+if(NOT SZ3_LIBRARY)
+  message(FATAL_ERROR "Could not find SZ3 library in external/SZ3/build/lib or build/src")
+endif()
+
 set (MGARDx_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/external/MGARDx/install/include")
 
 add_library(${PROJECT_NAME} INTERFACE)
-target_include_directories(${PROJECT_NAME} INTERFACE include ${SZ3_INCLUDES} ${ZSTD_INCLUDES})
-target_link_libraries(${PROJECT_NAME} INTERFACE ${ZSTD_LIB} ${SZ3_LIB})
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+  "${CMAKE_CURRENT_SOURCE_DIR}/include"
+  "${SZ3_INCLUDE_DIR}"
+  "${ZSTD_INCLUDE_DIR}"
+)
+
+target_link_libraries(${PROJECT_NAME} INTERFACE
+  "${ZSTD_LIBRARY}"
+  "${SZ3_LIBRARY}"
+)
+
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/ DESTINATION include)
+
 add_subdirectory(test)
-# add_subdirectory(qoi_cuda)
 add_subdirectory(parallel_src)

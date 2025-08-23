@@ -220,16 +220,16 @@ int main(int argc, char ** argv){
 		local_IO_time += reconstructors[i].get_IO_time();
 	}
 	MPI_Reduce(&local_IO_time, &gloabl_IO_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	if(!rank) printf("IO_time = %.6f\n", gloabl_IO_time);
+	if(!rank) printf("IO_time = %.6f s\n", gloabl_IO_time);
+	double max_est_error = print_max_abs(rank, "V_TOT error", error_est_V_TOT);
+	double max_vtot_error_est = 0;
+	MPI_Reduce(&max_est_error, &max_vtot_error_est, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+	if(!rank) printf("Max aggregated V_TOT est_error = %.10f\n", max_vtot_error_est);
 	double max_error = 0;
 	max_error = print_max_abs(rank, "V_TOT error", error_V_TOT);
 	double max_vtot_error = 0;
 	MPI_Reduce(&max_error, &max_vtot_error, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 	if(!rank) printf("Max aggregated V_TOT act_error = %.10f\n", max_vtot_error);
-	double max_est_error = print_max_abs(rank, "V_TOT error", error_est_V_TOT);
-	double max_vtot_error_est = 0;
-	MPI_Reduce(&max_est_error, &max_vtot_error_est, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	if(!rank) printf("Max aggregated V_TOT est_error = %.10f\n", max_vtot_error_est);
 	unsigned long long int total_num = 0;
 	MPI_Reduce(&num_elements, &total_num, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 	unsigned long long int total_retrieved = 0;

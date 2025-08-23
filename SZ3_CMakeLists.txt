@@ -1,13 +1,41 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 project(SZ3)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "-O3")
-#add_definitions(-DPOLY_REGRESSION_COEF_FOLDER="${CMAKE_CURRENT_SOURCE_DIR}/data/")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp.in
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/SZ3/version.hpp
+)
 
-find_library(ZSTD_LIBS zstd HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install/lib64")
-set(ZSTD_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install/include")
+include(GNUInstallDirs)
+message(STATUS "[SZ3] CMAKE_INSTALL_LIBDIR = ${CMAKE_INSTALL_LIBDIR}")
+
+find_path(ZSTD_INCLUDES NAMES zstd.h
+    HINTS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install/include"
+        /usr/include
+        /usr/local/include
+)
+
+find_library(ZSTD_LIBS NAMES zstd libzstd
+    HINTS "${CMAKE_CURRENT_SOURCE_DIR}/../SZ2/install"
+    PATH_SUFFIXES lib ${CMAKE_INSTALL_LIBDIR}
+)
+
+if(NOT ZSTD_LIBS)
+    message(FATAL_ERROR
+        "[SZ3] Could not find libzstd. Expected in ../SZ2/install/lib or lib64. "
+        "Please check SZ2 build or install libzstd-dev."
+    )
+endif()
+
+if(NOT ZSTD_INCLUDES)
+    message(FATAL_ERROR
+        "[SZ3] Could not find zstd.h. Expected in ../SZ2/install/include or system paths."
+    )
+endif()
 
 add_subdirectory(src)

@@ -191,7 +191,7 @@ int main(int argc, char ** argv){
 	for(int i=0; i<n_variable; i++){
 		IO_time += reconstructors[i].get_IO_time();
 	}
-	std::cout << "IO_time = " << IO_time << std::endl;
+	std::cout << "IO_time = " << IO_time << " s" << std::endl;
 
 	std::cout << "requested error = " << tau << std::endl;
 	std::cout << "max_est_error = " << max_est_error << std::endl;
