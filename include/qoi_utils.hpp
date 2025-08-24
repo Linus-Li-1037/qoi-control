@@ -27,6 +27,21 @@ inline double compute_inverse_bound_x_square(T x, T eb, T tau){
 }
 
 // f(x) = sqrt(x)
+// template <class T>
+// inline double compute_bound_square_root_x(T x, T eb){
+// 	if(x == 0) {
+// 		return sqrt(eb);
+// 	}
+// 	if(x > eb){
+// 		return eb / (sqrt(x - eb) + sqrt(x));
+// 	}
+// 	else{
+// 		// return eb / sqrt(x);
+// 		T tau_1 = sqrt(x + eb) - sqrt(x);
+// 		T tau_2 = sqrt(x);
+// 		return (tau_1 > tau_2) ? tau_1 : tau_2;
+// 	}
+// }
 template <class T>
 inline double compute_bound_square_root_x(T x, T eb){
 	if(x == 0) {
@@ -287,6 +302,24 @@ T print_max_abs(const std::string& name, const std::vector<T>& vec){
 	}
 	// std::cout << name << ": max absolute value = " << max << std::endl;
 	return max;
+}
+
+template <class T>
+long double print_RMSE(const std::string& name, const std::vector<T>& vec){
+	long double sum = 0;
+	for(int i=0; i<vec.size(); i++){
+		sum += static_cast<long double>(vec[i]) * static_cast<long double>(vec[i]);
+	}
+	return sqrt(sum / vec.size());
+}
+
+template <class T>
+long double print_NRMSE(const std::string& name, const std::vector<T>& vec, const T Rx){
+	long double sum = 0;
+	for(int i=0; i<vec.size(); i++){
+		sum += static_cast<long double>(vec[i]) * static_cast<long double>(vec[i]);
+	}
+	return sqrt(sum / vec.size()) / Rx;
 }
 
 template <class T>
