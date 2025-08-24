@@ -17,10 +17,6 @@
 set -x
 set -e
 
-ml rocm/6.3.1
-ml hdf5
-module load cmake
-
 a1=0.1
 r=0.1
 n=5
