@@ -19,6 +19,7 @@ make install
 cd ${external_dir}
 git clone https://github.com/szcompressor/SZ3.git
 cd SZ3
+git reset --hard 90c66bed1c04e701442ecb104b912548fcfabee9
 cp -r ${source_dir}/SZ3_src src
 cp ${source_dir}/SZ3_CMakeLists.txt CMakeLists.txt
 mkdir -p build

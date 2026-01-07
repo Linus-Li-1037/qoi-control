@@ -50,7 +50,7 @@ bool halfing_error_V_TOT_uniform(const T * Vx, const T * Vy, const T * Vz, size_
 		}
 
 	}
-	std::cout << names[0] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << names[0] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		// estimate
@@ -63,7 +63,7 @@ bool halfing_error_V_TOT_uniform(const T * Vx, const T * Vy, const T * Vz, size_
 		double eb_Vz = ebs[2];
 		while(estimate_error > tau){
 			// change error bound
-    		std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease\n";
 			eb_Vx = eb_Vx / 1.5;
 			eb_Vy = eb_Vy / 1.5;
 			eb_Vz = eb_Vz / 1.5; 							        		
@@ -112,14 +112,14 @@ int main(int argc, char ** argv){
 	err = clock_gettime(CLOCK_REALTIME, &start);
 
     std::string mask_file = rdata_file_prefix + "mask.bin";
-    size_t num_valid_data = 0;
-    auto mask = MGARD::readfile<unsigned char>(mask_file.c_str(), num_valid_data);
+    uint32_t mask_file_size = 0;
+    auto mask = readmask(mask_file.c_str(), mask_file_size);
     std::vector<MDR::ComposedReconstructor<T, MGARDHierarchicalDecomposer<T>, DirectInterleaver<T>, PerBitBPEncoder<T, uint32_t>, AdaptiveLevelCompressor, SignExcludeGreedyBasedSizeInterpreter<MaxErrorEstimatorHB<T>>, MaxErrorEstimatorHB<T>, ConcatLevelFileRetriever>> reconstructors;
     for(int i=0; i<n_variable; i++){
         std::string rdir_prefix = rdata_file_prefix + var_list[i];
         std::string metadata_file = rdir_prefix + "_refactored/metadata.bin";
         std::vector<std::string> files;
-        int num_levels = 9;
+        int num_levels = 5;
         for(int j=0; j<num_levels; j++){
             std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(j) + ".bin";
             files.push_back(filename);
@@ -139,7 +139,7 @@ int main(int argc, char ** argv){
 	std::vector<size_t> total_retrieved_size(n_variable, 0);
 
     int iter = 0;
-    int max_iter = 5;
+    int max_iter = 30;
 	bool tolerance_met = false;
 	double max_act_error = 0, max_est_error = 0;
     while((!tolerance_met) && (iter < max_iter)){
@@ -150,24 +150,25 @@ int main(int argc, char ** argv){
 			int index = 0;
 			for(int j=0; j<num_elements; j++){
 				if(mask[j]){
-					reconstructed_vars[i][j] = reconstructed_data[index ++];
+					reconstructed_vars[i][j] = reconstructed_data[index];
 				}
 				else reconstructed_vars[i][j] = 0;
+				index++;
 			}
 	    }
 	    Vx_dec = reconstructed_vars[0].data();
 	    Vy_dec = reconstructed_vars[1].data();
 	    Vz_dec = reconstructed_vars[2].data();
-	    MGARD::print_statistics(Vx_ori.data(), Vx_dec, num_elements);
-	    MGARD::print_statistics(Vy_ori.data(), Vy_dec, num_elements);
-	    MGARD::print_statistics(Vz_ori.data(), Vz_dec, num_elements);
+	    // MGARD::print_statistics(Vx_ori.data(), Vx_dec, num_elements);
+	    // MGARD::print_statistics(Vy_ori.data(), Vy_dec, num_elements);
+	    // MGARD::print_statistics(Vz_ori.data(), Vz_dec, num_elements);
 	    error_V_TOT = std::vector<double>(num_elements);
 	    error_est_V_TOT = std::vector<double>(num_elements);
-		std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    tolerance_met = halfing_error_V_TOT_uniform(Vx_dec, Vy_dec, Vz_dec, num_elements, mask, tau, ebs);
-		std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    // std::cout << names[0] << " requested error = " << tau << std::endl;
 	    max_act_error = print_max_abs(names[0] + " error", error_V_TOT);
 	    max_est_error = print_max_abs(names[0] + " error_est", error_est_V_TOT);  
