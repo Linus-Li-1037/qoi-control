@@ -151,9 +151,9 @@ int main(int argc, char ** argv){
     Vz_ori = MGARD::readfile<T>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
 
     std::vector<double> ebs;
-    ebs.push_back(compute_global_value_range(Vx_ori));
-    ebs.push_back(compute_global_value_range(Vy_ori));
-    ebs.push_back(compute_global_value_range(Vz_ori));
+    ebs.push_back(compute_value_range(Vx_ori));
+    ebs.push_back(compute_value_range(Vy_ori));
+    ebs.push_back(compute_value_range(Vz_ori));
 	int n_variable = ebs.size();
 
     for(int i=0; i<ebs.size(); i++){
@@ -192,7 +192,7 @@ int main(int argc, char ** argv){
     std::vector<std::vector<T>> reconstructed_vars(n_variable, std::vector<T>(num_elements));
 	
     int iter = 0;
-    int max_iter = 20;
+    int max_iter = 30;
 	bool tolerance_met = false;
     size_t total_size = 0;
 	double local_elapsed_time = 0, max_time = 0;
@@ -215,6 +215,10 @@ int main(int argc, char ** argv){
 	// std::cout << "rank = " << rank << " act_iter = " << iter << std::endl;
 	local_elapsed_time += MPI_Wtime();
 	MPI_Reduce(&local_elapsed_time, &max_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
+
+	int global_max_iter = 0;
+    MPI_Reduce(&iter, &global_max_iter, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    if(!rank) std::cout << "max_iter = " << global_max_iter << std::endl;
 
     if(!rank) printf("requested_error = %.10f\n", global_tau);
 

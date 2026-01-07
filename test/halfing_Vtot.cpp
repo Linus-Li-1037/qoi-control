@@ -165,12 +165,11 @@ int main(int argc, char ** argv){
 			total_retrieved_size[i] = reconstructors[i].get_retrieved_size();
 	        if(i < 3){
 	            // reconstruct with mask
-	            int index = 0;
+				memcpy(reconstructed_vars[i].data(), reconstructed_data, num_elements*sizeof(T));
 	            for(int j=0; j<num_elements; j++){
-	                if(mask[j]){
-	                    reconstructed_vars[i][j] = reconstructed_data[index ++];
+	                if(!mask[j]){
+	                    reconstructed_vars[i][j] = 0;
 	                }
-	                else reconstructed_vars[i][j] = 0;
 	            }
 	        }
 	        else{

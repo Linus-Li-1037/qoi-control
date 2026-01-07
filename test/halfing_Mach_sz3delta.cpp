@@ -183,10 +183,9 @@ int main(int argc, char ** argv){
                     SZ3_decompress(cmpData.data(), n, reconstructed_data);
 					if(i < 3){
 						// reconstruct with mask
-						int index = 0;
 						for(int j=0; j<num_elements; j++){
 							if(mask[j]){
-								reconstructed_vars[i][j] += reconstructed_data[index ++];
+								reconstructed_vars[i][j] += reconstructed_data[j];
 							}
 							else reconstructed_vars[i][j] = 0;
 						}

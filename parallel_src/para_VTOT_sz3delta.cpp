@@ -132,9 +132,9 @@ int main(int argc, char ** argv){
     Vz_ori = MGARD::readfile<T>((data_file_prefix + var_name_out[2] + ".dat").c_str(), num_elements);
 
     std::vector<double> ebs;
-    ebs.push_back(compute_global_value_range(Vx_ori));
-    ebs.push_back(compute_global_value_range(Vy_ori));
-    ebs.push_back(compute_global_value_range(Vz_ori));
+    ebs.push_back(compute_value_range(Vx_ori));
+    ebs.push_back(compute_value_range(Vy_ori));
+    ebs.push_back(compute_value_range(Vz_ori));
 	int n_variable = ebs.size();
 
     for(int i=0; i<ebs.size(); i++){
@@ -197,7 +197,9 @@ int main(int argc, char ** argv){
 	local_elapsed_time += MPI_Wtime();
 	MPI_Reduce(&local_elapsed_time, &global_elapsed_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-	// std::cout << "rank = " << rank << " act_iter = " << iter << std::endl;
+	int global_max_iter = 0;
+    MPI_Reduce(&iter, &global_max_iter, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    if(!rank) std::cout << "max_iter = " << global_max_iter << std::endl;
 
     free(reconstructed_data);
 

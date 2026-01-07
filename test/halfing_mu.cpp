@@ -48,8 +48,8 @@ bool halfing_error_mu_uniform(const T * P, const T * D, size_t n, const double t
 		double Temp = P[i] / (D[i] * R);
 		double e_TrS_TS = c_3 * compute_bound_radical(Temp, S, e_T);
 		double TrS_TS = c_3 / (Temp + S);
-		double e_T_Tr_3 = 3*pow(Temp/T_r, 2)*(e_T/T_r) + 3*Temp/T_r*(e_T/T_r)*(e_T/T_r) + (e_T/T_r)*(e_T/T_r)*(e_T/T_r);
-		double T_Tr_3 = pow(Temp/T_r, 3);
+		double e_T_Tr_3 = 3 * (Temp/T_r) * (Temp/T_r) *(e_T/T_r) + 3*Temp/T_r*(e_T/T_r)*(e_T/T_r) + (e_T/T_r)*(e_T/T_r)*(e_T/T_r);
+		double T_Tr_3 = (Temp/T_r) * (Temp/T_r) * (Temp/T_r);
 		double e_T_Tr_3_sqrt = compute_bound_square_root_x(T_Tr_3, e_T_Tr_3);
 		double T_Tr_3_sqrt = sqrt(T_Tr_3);
 		double e_mu = mu_r * compute_bound_multiplication(T_Tr_3_sqrt, TrS_TS, e_T_Tr_3_sqrt, e_TrS_TS);
@@ -78,8 +78,8 @@ bool halfing_error_mu_uniform(const T * P, const T * D, size_t n, const double t
 			double Temp = P[i] / (D[i] * R);
 			double e_TrS_TS = c_3 * compute_bound_radical(Temp, S, e_T);
 			double TrS_TS = c_3 / (Temp + S);
-			double e_T_Tr_3 = 3*pow(Temp/T_r, 2)*(e_T/T_r) + 3*Temp/T_r*(e_T/T_r)*(e_T/T_r) + (e_T/T_r)*(e_T/T_r)*(e_T/T_r);
-			double T_Tr_3 = pow(Temp/T_r, 3);
+			double e_T_Tr_3 = 3 * (Temp/T_r) * (Temp/T_r) *(e_T/T_r) + 3*Temp/T_r*(e_T/T_r)*(e_T/T_r) + (e_T/T_r)*(e_T/T_r)*(e_T/T_r);
+			double T_Tr_3 = (Temp/T_r) * (Temp/T_r) * (Temp/T_r);
 			double e_T_Tr_3_sqrt = compute_bound_square_root_x(T_Tr_3, e_T_Tr_3);
 			double T_Tr_3_sqrt = sqrt(T_Tr_3);
 			estimate_error = mu_r * compute_bound_multiplication(T_Tr_3_sqrt, TrS_TS, e_T_Tr_3_sqrt, e_TrS_TS);			

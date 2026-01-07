@@ -45,6 +45,8 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 	double max_value = 0;
 	int max_index = 0;
 	int n_variable = ebs.size();
+	double Mach_tmp_pow[8];
+    double e_Mach_tmp_pow[8];
 	for(int i=0; i<n; i++){
 		double e_V_TOT_2 = 0;
 		if(mask[i]) e_V_TOT_2 = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
@@ -61,10 +63,16 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 		double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
 		double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
 		double e_Mach_tmp_mi = 0;
-		for(int i=1; i<=7; i++){
-			e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
-		}
-		double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+		Mach_tmp_pow[0] = 1;
+        e_Mach_tmp_pow[0] = 1;
+        for (int k = 1; k <= 7; k++) {
+            Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+            e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
+        }
+        for (int k = 1; k <= 7; k++) {
+            e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+        }
+		double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 		double e_PT = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
 		double PT = P[i] * Mach_tmp_mi;
 
@@ -107,10 +115,16 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 			double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
 			double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
 			double e_Mach_tmp_mi = 0;
-			for(int i=1; i<=7; i++){
-				e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
+			Mach_tmp_pow[0] = 1;
+			e_Mach_tmp_pow[0] = 1;
+			for (int k = 1; k <= 7; k++) {
+				Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+				e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
 			}
-			double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+			for (int k = 1; k <= 7; k++) {
+				e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+			}
+			double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 			estimate_error = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
 		}
 		ebs[0] = eb_Vx;
@@ -201,12 +215,11 @@ int main(int argc, char ** argv){
 			total_retrieved_size[i] = reconstructors[i].get_retrieved_size();
 	        if(i < 3){
 	            // reconstruct with mask
-	            int index = 0;
+				memcpy(reconstructed_vars[i].data(), reconstructed_data, num_elements*sizeof(T));
 	            for(int j=0; j<num_elements; j++){
-	                if(mask[j]){
-	                    reconstructed_vars[i][j] = reconstructed_data[index ++];
+	                if(!mask[j]){
+	                    reconstructed_vars[i][j] = 0;
 	                }
-	                else reconstructed_vars[i][j] = 0;
 	            }
 	        }
 	        else{
@@ -227,10 +240,7 @@ int main(int argc, char ** argv){
 	    error_est_PT = std::vector<double>(num_elements);
 		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
-		err = clock_gettime(CLOCK_REALTIME, &halfing_start);
 	    tolerance_met = halfing_error_PT_uniform(Vx_dec, Vy_dec, Vz_dec, P_dec, D_dec, num_elements, mask, tau, ebs);
-		err = clock_gettime(CLOCK_REALTIME, &halfing_end);
-		halfing_time = (double)(halfing_end.tv_sec - halfing_start.tv_sec) + (double)(halfing_end.tv_nsec - halfing_start.tv_nsec)/(double)1000000000;
 		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
 	    // std::cout << names[4] << " requested error = " << tau << std::endl;
@@ -255,7 +265,6 @@ int main(int argc, char ** argv){
 	// MDR::print_vec(total_retrieved_size);
 	std::cout << "aggregated cr = " << cr << std::endl;
 	std::cout << "bitrate = " << ((sizeof(T) * 8) / cr) << std::endl;
-	printf("halfing_time = %.6f\n", halfing_time);
 	printf("elapsed_time = %.6f\n", elapsed_time);
 
     return 0;

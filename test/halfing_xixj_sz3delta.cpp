@@ -33,8 +33,8 @@ bool halfing_error_XiXj_uniform(const T * Xi, const T * Xj, size_t n, const doub
 	double max_value = 0;
 	int max_index = 0;
 	int n_variable = ebs.size();
-	double max_err = -1;
-	int max_err_index = 0;
+	// double max_err = -1;
+	// int max_err_index = 0;
 	for(int i=0; i<n; i++){
 		double e_XiXj = compute_bound_multiplication(Xi[i], Xj[i], eb_Xi, eb_Xj);
         double XiXj = Xi[i] * Xj[i];
@@ -45,12 +45,12 @@ bool halfing_error_XiXj_uniform(const T * Xi, const T * Xj, size_t n, const doub
 			max_value = error_est_XiXj[i];
 			max_index = i;
 		}
-		if(max_err < fabs(error_XiXj[i])){
-			max_err = fabs(error_XiXj[i]);
-			max_err_index = i;
-		}
+		// if(max_err < fabs(error_XiXj[i])){
+		// 	max_err = fabs(error_XiXj[i]);
+		// 	max_err_index = i;
+		// }
 	}
-	std::cout << "XiXj: max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << "XiXj: max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		auto i = max_index;
@@ -58,7 +58,7 @@ bool halfing_error_XiXj_uniform(const T * Xi, const T * Xj, size_t n, const doub
 		double eb_Xi = ebs[0];
 		double eb_Xj = ebs[1];
 		while(estimate_error > tau){
-    		std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease\n";
 			eb_Xi = eb_Xi / 1.5;
 			eb_Xj = eb_Xj / 1.5;
 			estimate_error = compute_bound_multiplication(Xi[i], Xj[i], eb_Xi, eb_Xj);
@@ -85,8 +85,8 @@ int main(int argc, char **argv){
 	std::vector<int> index = {id_i, id_j};
 
     size_t num_elements = 0;
-    Xi_ori = MGARD::readfile<T>((s3d_data_file_prefix + species[id_i] + ".dat").c_str(), num_elements);
-    Xj_ori = MGARD::readfile<T>((s3d_data_file_prefix + species[id_j] + ".dat").c_str(), num_elements);
+    Xi_ori = MGARD::readfile<T>((data_file_prefix + species[id_i] + ".dat").c_str(), num_elements);
+    Xj_ori = MGARD::readfile<T>((data_file_prefix + species[id_j] + ".dat").c_str(), num_elements);
     std::vector<double> ebs;
     ebs.push_back(compute_value_range(Xi_ori)*target_rel_eb);
     ebs.push_back(compute_value_range(Xj_ori)*target_rel_eb);
@@ -119,11 +119,11 @@ int main(int argc, char **argv){
     while((!tolerance_met) && (iter < max_iter)){
     	iter ++;
 	    for(int i=0; i<n_variable; i++){
-            std::string rdir_prefix = s3d_rdata_file_prefix + species[index[i]];
+            std::string rdir_prefix = rdata_file_prefix + species[index[i]];
             double file_eb = 0.1;
             auto file_ind = find_index(ebs[i]/var_range[i], file_eb);
-            std::cout << "file_ind = " << file_ind << std::endl;
-            std::cout << "Requested relative tolerance = " << ebs[i]/var_range[i] << ", expected relative tolerance = " << file_eb << "\n"; 
+            // std::cout << "file_ind = " << file_ind << std::endl;
+            // std::cout << "Requested relative tolerance = " << ebs[i]/var_range[i] << ", expected relative tolerance = " << file_eb << "\n"; 
             if(file_ind > current_ind[i]){
                 for(int j=current_ind[i]+1; j<=file_ind; j++){
                     std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
@@ -140,18 +140,18 @@ int main(int argc, char **argv){
 	    }
 	    Xi_dec = reconstructed_vars[0].data();
 	    Xj_dec = reconstructed_vars[1].data();
-	    MGARD::print_statistics(Xi_ori.data(), Xi_dec, num_elements);
-	    MGARD::print_statistics(Xj_ori.data(), Xj_dec, num_elements);
+	    // MGARD::print_statistics(Xi_ori.data(), Xi_dec, num_elements);
+	    // MGARD::print_statistics(Xj_ori.data(), Xj_dec, num_elements);
 	    error_XiXj = std::vector<double>(num_elements);
 	    error_est_XiXj = std::vector<double>(num_elements);
-		std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
+		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
 	    tolerance_met = halfing_error_XiXj_uniform(Xi_dec, Xj_dec, num_elements, tau, ebs);
-		std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
-	    MDR::print_vec(ebs);
-	    std::cout << "requested error = " << tau << std::endl;
-	    print_max_abs("error_est", error_est_XiXj);   	
-	    print_max_abs("actual error", error_XiXj);
+		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
+	    // MDR::print_vec(ebs);
+	    // std::cout << "requested error = " << tau << std::endl;
+	    // print_max_abs("error_est", error_est_XiXj);   	
+	    // print_max_abs("actual error", error_XiXj);
 		std::string name = "X" + std::to_string(id_i) + "X" + std::to_string(id_j);
 	    // std::cout << name << " requested error = " << tau << std::endl;
 	    max_est_error = print_max_abs(name + " error_est", error_est_XiXj);   	
@@ -160,7 +160,7 @@ int main(int argc, char **argv){
 	err = clock_gettime(CLOCK_REALTIME, &end);
 	elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;
 
-	std::cout << "requested error = " << tau << std::endl;
+	std::cout << "requested_error = " << tau << std::endl;
 	std::cout << "max_est_error = " << max_est_error << std::endl;
 	std::cout << "max_act_error = " << max_act_error << std::endl;
 	std::cout << "iter = " << iter << std::endl;
@@ -174,6 +174,7 @@ int main(int argc, char **argv){
     std::cout << std::endl;
 	// MDR::print_vec(total_retrieved_size);
 	std::cout << "aggregated cr = " << cr << std::endl;
+	std::cout << "bitrate = " << ((sizeof(T) * 8) / cr) << std::endl;
 	printf("elapsed_time = %.6f\n", elapsed_time);
 
 	return 0;

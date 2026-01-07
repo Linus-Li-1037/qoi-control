@@ -45,6 +45,8 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 	double max_value = 0;
 	int max_index = 0;
 	int n_variable = ebs.size();
+	double Mach_tmp_pow[8];
+    double e_Mach_tmp_pow[8];
 	for(int i=0; i<n; i++){
 		double e_V_TOT_2 = 0;
 		if(mask[i]) e_V_TOT_2 = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
@@ -61,10 +63,16 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 		double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
 		double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
 		double e_Mach_tmp_mi = 0;
-		for(int i=1; i<=7; i++){
-			e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
-		}
-		double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+		Mach_tmp_pow[0] = 1;
+        e_Mach_tmp_pow[0] = 1;
+        for (int k = 1; k <= 7; k++) {
+            Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+            e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
+        }
+        for (int k = 1; k <= 7; k++) {
+            e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+        }
+		double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 		double e_PT = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
 		double PT = P[i] * Mach_tmp_mi;
 
@@ -75,7 +83,7 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 			max_index = i;
 		}
 	}
-	// std::cout << names[3] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		auto i = max_index;
@@ -107,10 +115,16 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 			double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
 			double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
 			double e_Mach_tmp_mi = 0;
-			for(int i=1; i<=7; i++){
-				e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
+			Mach_tmp_pow[0] = 1;
+			e_Mach_tmp_pow[0] = 1;
+			for (int k = 1; k <= 7; k++) {
+				Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+				e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
 			}
-			double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+			for (int k = 1; k <= 7; k++) {
+				e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+			}
+			double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 			estimate_error = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
 		}
 		ebs[0] = eb_Vx;
@@ -181,21 +195,22 @@ int main(int argc, char ** argv){
             std::string rdir_prefix = rdata_file_prefix + varlist[i];
             double file_eb = 0.1;
             auto file_ind = find_index(ebs[i]/var_range[i], file_eb);
+			// if(iter == 1) std::cout << "value range [" << i << "] = " << var_range[i] << std::endl;
             // std::cout << "file_ind = " << file_ind << std::endl;
             // std::cout << "Requested relative tolerance = " << ebs[i]/var_range[i] << ", expected tolerance = " << file_eb << "\n"; 
             if(file_ind > current_ind[i]){
                 for(int j=current_ind[i]+1; j<=file_ind; j++){
                     std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
+					// std::cout << "filename = " << filename << std::endl;
                     size_t n = 0;
                     auto cmpData = MGARD::readfile<char>(filename.c_str(), n);
                     total_retrieved_size[i] += n;
                     SZ3_decompress(cmpData.data(), n, reconstructed_data);
 					if(i < 3){
 						// reconstruct with mask
-						int index = 0;
 						for(int j=0; j<num_elements; j++){
 							if(mask[j]){
-								reconstructed_vars[i][j] += reconstructed_data[index ++];
+								reconstructed_vars[i][j] += reconstructed_data[j];
 							}
 							else reconstructed_vars[i][j] = 0;
 						}

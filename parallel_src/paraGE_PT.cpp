@@ -50,12 +50,14 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 	double max_value = 0;
 	int max_index = 0;
 	int n_variable = ebs.size();
+	double Mach_tmp_pow[8];
+    double e_Mach_tmp_pow[8];
 	for(int i=0; i<n; i++){
 		double e_V_TOT_2 = 0;
-		if(mask[i]) e_V_TOT_2 = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
+		e_V_TOT_2 = mask[i] ? compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz) : 0;
 		double V_TOT_2 = Vx[i]*Vx[i] + Vy[i]*Vy[i] + Vz[i]*Vz[i];
 		double e_V_TOT = 0;
-		if(mask[i]) e_V_TOT = compute_bound_square_root_x(V_TOT_2, e_V_TOT_2);
+		e_V_TOT = mask[i] ? compute_bound_square_root_x(V_TOT_2, e_V_TOT_2) : 0;
 		double V_TOT = sqrt(V_TOT_2);
 		double e_T = c_1 * compute_bound_division(P[i], D[i], eb_P, eb_D);
 		double Temp = P[i] / (D[i] * R);
@@ -63,13 +65,19 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 		double C = c_2 * sqrt(Temp);
 		double e_Mach = compute_bound_division(V_TOT, C, e_V_TOT, e_C);
 		double Mach = V_TOT / C;
-		double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
-		double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
+		double e_Mach_tmp = ldexp(gamma - 1, -1) * compute_bound_x_square(Mach, e_Mach);
+		double Mach_tmp = 1 + ldexp(gamma - 1, -1) * Mach * Mach;
 		double e_Mach_tmp_mi = 0;
-		for(int i=1; i<=7; i++){
-			e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
-		}
-		double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+        Mach_tmp_pow[0] = 1;
+        e_Mach_tmp_pow[0] = 1;
+        for (int k = 1; k <= 7; k++) {
+            Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+            e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
+        }
+        for (int k = 1; k <= 7; k++) {
+            e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+        }
+		double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 		double e_PT = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
 		double PT = P[i] * Mach_tmp_mi;
 
@@ -112,11 +120,18 @@ bool halfing_error_PT_uniform(const T * Vx, const T * Vy, const T * Vz, const T 
 			double e_Mach_tmp = (gamma-1) / 2 * compute_bound_x_square(Mach, e_Mach);
 			double Mach_tmp = 1 + (gamma-1)/2 * Mach * Mach;
 			double e_Mach_tmp_mi = 0;
-			for(int i=1; i<=7; i++){
-				e_Mach_tmp_mi += C7i[i] * pow(Mach_tmp, 7-i) * pow(e_Mach_tmp, i);
+			Mach_tmp_pow[0] = 1;
+			e_Mach_tmp_pow[0] = 1;
+			for (int k = 1; k <= 7; k++) {
+				Mach_tmp_pow[k] = Mach_tmp_pow[k - 1] * Mach_tmp;
+				e_Mach_tmp_pow[k] = e_Mach_tmp_pow[k - 1] * e_Mach_tmp;
 			}
-			double Mach_tmp_mi = sqrt(pow(Mach_tmp, 7));
+			for (int k = 1; k <= 7; k++) {
+				e_Mach_tmp_mi += C7i[k] * Mach_tmp_pow[7 - k] * e_Mach_tmp_pow[k];
+			}
+			double Mach_tmp_mi = sqrt(Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp * Mach_tmp);
 			estimate_error = compute_bound_multiplication(P[i], Mach_tmp_mi, eb_P, e_Mach_tmp_mi);
+			// if((ebs[0] / eb_Vx) > 10) break;
 		}
 		ebs[0] = eb_Vx;
 		ebs[1] = eb_Vy;
@@ -168,8 +183,8 @@ int main(int argc, char ** argv){
 	data_prefix_path += oss.str();
 	std::string data_file_prefix = data_prefix_path + "/data/";
 	std::string rdata_file_prefix = data_prefix_path + "/refactor/";
-	// int exp = static_cast<int>(std::round(std::log10(target_rel_eb)));
-	// std::string wdata_file_prefix = output_path + "/1e" + std::to_string(exp) + "/";
+	int exp = static_cast<int>(std::round(std::log10(target_rel_eb)));
+	std::string wdata_file_prefix = output_path + "/1e" + std::to_string(exp) + "/";
 
 
     const int target_level = 4;
@@ -182,11 +197,11 @@ int main(int argc, char ** argv){
     Vy_ori = MGARD::readfile<T>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
     Vz_ori = MGARD::readfile<T>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
     std::vector<double> ebs;
-    ebs.push_back(compute_global_value_range(Vx_ori)*target_rel_eb);
-    ebs.push_back(compute_global_value_range(Vy_ori)*target_rel_eb);
-    ebs.push_back(compute_global_value_range(Vz_ori)*target_rel_eb);
-    ebs.push_back(compute_global_value_range(P_ori)*target_rel_eb);
-    ebs.push_back(compute_global_value_range(D_ori)*target_rel_eb);
+    ebs.push_back(compute_value_range(Vx_ori)*target_rel_eb);
+    ebs.push_back(compute_value_range(Vy_ori)*target_rel_eb);
+    ebs.push_back(compute_value_range(Vz_ori)*target_rel_eb);
+    ebs.push_back(compute_value_range(P_ori)*target_rel_eb);
+    ebs.push_back(compute_value_range(D_ori)*target_rel_eb);
 	int n_variable = ebs.size();
 
     std::vector<T> PT(num_elements);
@@ -238,12 +253,12 @@ int main(int argc, char ** argv){
 			    local_total_size += reconstructors[i].get_retrieved_size();
                 if(i < 3){
                     // reconstruct with mask
-                    int index = 0;
+                    // int index = 0;
+					memcpy(reconstructed_vars[i].data(), reconstructed_data, num_elements*sizeof(T));
                     for(int j=0; j<num_elements; j++){
-                        if(mask[j]){
-                            reconstructed_vars[i][j] = reconstructed_data[index ++];
+                        if(!mask[j]){
+                            reconstructed_vars[i][j] = 0;
                         }
-                        else reconstructed_vars[i][j] = 0;
                     }
                 }
                 else{
@@ -262,20 +277,24 @@ int main(int argc, char ** argv){
 	local_elapsed_time += MPI_Wtime();
 	MPI_Reduce(&local_elapsed_time, &global_elapsed_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-	// std::cout << "rank = " << rank << " act_iter = " << iter << std::endl;
+	int global_max_iter = 0;
+    MPI_Reduce(&iter, &global_max_iter, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD);
+    if(!rank) std::cout << "max_iter = " << global_max_iter << std::endl;
 
-    if(!rank) printf("requested_error = %.10f\n", global_tau);
+    if(!rank) std::cout << "requested_error = " << global_tau << std::endl;
 
 	double local_max_est_error = print_max_abs("", error_est_PT);
 	double global_max_est_error = 0;
 	MPI_Reduce(&local_max_est_error, &global_max_est_error, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	if(!rank) printf("max_est_error = %.10f\n", global_max_est_error);
+	if(!rank) std::cout << "max_est_error = " << global_max_est_error << std::endl;
+
+	// std::cout << "rank = " << rank << ", local_max_est_error = " << local_max_est_error << std::endl;
 
 	double local_max_act_error = 0;
 	local_max_act_error = print_max_abs("", error_PT);
 	double global_max_act_error = 0;
 	MPI_Reduce(&local_max_act_error, &global_max_act_error, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
-	if(!rank) printf("max_act_error = %.10f\n", global_max_act_error);
+	if(!rank) std::cout << "max_act_error = " << global_max_act_error << std::endl;
 
 	local_total_size += mask_file_size;
 
@@ -285,36 +304,61 @@ int main(int argc, char ** argv){
 	MPI_Reduce(&local_total_size, &global_total_retrieved, 1, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD);
 	if(!rank) printf("Aggregated bitrate = %.10f, retrieved_size = %ld, total_num_elements = %ld\n", 8*global_total_retrieved * 1.0 / (global_total_num * n_variable), global_total_retrieved, global_total_num);
 	if(!rank) printf("elapsed_time = %.6f\n", global_elapsed_time);
-    // size_t total_2 = 0;
-    // for(int i=0; i<n_variable; i++){
-    //     auto count = reconstructors[i].get_offsets();
-    //     auto offsets(count);
-    //     for(int j=0; j<offsets.size(); j++) offsets[j] = 0;
-    //     auto buffer(offsets);
-    //     for(int j=0; j<size; j++){
-    //         if(j == rank){
-    //             if(j != 0) {
-    //                 MPI_Recv(&offsets[0], offsets.size(), MPI_UNSIGNED, j-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-    //             }
-    //             for(int k=0; k<offsets.size(); k++){
-    //                 buffer[k] = offsets[k] + count[k];
-    //             }
-    //             if(j != size - 1) MPI_Send(&buffer[0], offsets.size(), MPI_UNSIGNED, j+1, 0, MPI_COMM_WORLD);
-    //         }
-    //     }
-    //     for(int k=0; k<offsets.size(); k++){
-    //         std::string rdir_prefix = rdata_file_prefix + var_name_out[i] + "_refactored/";
-    //         std::string file_level = rdir_prefix + "level_" + std::to_string(k) + ".bin";
-    //         size_t num_char = 0;
-    //         auto level_data = MGARD::readfile<unsigned char>(file_level.c_str(), num_char);
-    //         MPI_File file;
-    //         std::string filename = wdata_file_prefix + var_name_out[i] + "_aggregated_level_" + std::to_string(k) + ".dat";
-    //         MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
-    //         MPI_File_write_at(file, offsets[k], level_data.data(), count[k], MPI_SIGNED_CHAR, MPI_STATUS_IGNORE);
-    //         MPI_File_close(&file);
-    //         total_2 += count[k];
-    //     }
-    // }
+    
+	size_t total_2 = 0;
+    for(int i=0; i<n_variable; i++){
+        auto count = reconstructors[i].get_offsets();
+        auto offsets(count);
+        for(int j=0; j<offsets.size(); j++) offsets[j] = 0;
+        auto buffer(offsets);
+        for(int j=0; j<size; j++){
+            if(j == rank){
+                if(j != 0) {
+                    MPI_Recv(&offsets[0], offsets.size(), MPI_UNSIGNED, j-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                }
+                for(int k=0; k<offsets.size(); k++){
+                    buffer[k] = offsets[k] + count[k];
+                }
+                if(j != size - 1) MPI_Send(&buffer[0], offsets.size(), MPI_UNSIGNED, j+1, 0, MPI_COMM_WORLD);
+            }
+        }
+        for(int k=0; k<offsets.size(); k++){
+            std::string rdir_prefix = rdata_file_prefix + var_name_out[i] + "_refactored/";
+            std::string file_level = rdir_prefix + "level_" + std::to_string(k) + ".bin";
+            size_t num_char = 0;
+            auto level_data = MGARD::readfile<unsigned char>(file_level.c_str(), num_char);
+            MPI_File file;
+            std::string filename = wdata_file_prefix + var_name_out[i] + "_aggregated_level_" + std::to_string(k) + ".dat";
+            MPI_File_open(MPI_COMM_WORLD, filename.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &file);
+            MPI_File_write_at(file, offsets[k], level_data.data(), count[k], MPI_SIGNED_CHAR, MPI_STATUS_IGNORE);
+            MPI_File_close(&file);
+            total_2 += count[k];
+        }
+		if(i == 0){
+            // mask file size already known
+			unsigned long long int mask_offset = 0;
+			unsigned long long int mask_buffer; 
+			for(int j=0; j<size; j++){
+				if(j == rank){
+					if(j != 0) {
+						MPI_Recv(&mask_offset, 1, MPI_UNSIGNED_LONG_LONG, j-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+					}
+					mask_buffer = mask_offset + mask_file_size;
+					if(j != size - 1) {
+						MPI_Send(&mask_buffer, 1, MPI_UNSIGNED_LONG_LONG, j+1, 0, MPI_COMM_WORLD);
+					}
+				}
+			}
+			size_t mask_num_char = 0;
+			auto mask_data = MGARD::readfile<unsigned char> (mask_file.c_str(), mask_num_char);
+			MPI_File mask_file;
+			std::string mask_filename = wdata_file_prefix + "aggregated_mask.bin";
+			MPI_File_open(MPI_COMM_WORLD, mask_filename.c_str(), MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &mask_file);
+			MPI_File_write_at(mask_file, mask_offset, mask_data.data(), mask_file_size, MPI_SIGNED_CHAR, MPI_STATUS_IGNORE);
+			MPI_File_close(&mask_file);
+        }
+    }
+
     MPI_Finalize();
     return 0;
 }

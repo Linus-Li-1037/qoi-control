@@ -202,11 +202,11 @@ void refactor_GE(const std::string data_file_prefix, const std::string rdata_fil
     dims.push_back(num_elements);
     // compute masks
     std::vector<unsigned char> mask(num_elements, 0);
-    int num_valid_data = 0;
+    // int num_valid_data = 0;
     for(int i=0; i<num_elements; i++){
         if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
             mask[i] = 1;
-            num_valid_data ++;
+            // num_valid_data ++;
         }
     }
     int target_level = 4;
@@ -215,9 +215,9 @@ void refactor_GE(const std::string data_file_prefix, const std::string rdata_fil
     writemask(mask_file.c_str(), mask.data(), mask.size());
 
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec, pressure_vec, density_vec};
-    std::vector<uint32_t> dims_masked;
-    dims_masked.push_back(num_valid_data);
-    std::vector<Type> buffer(num_valid_data);
+    // std::vector<uint32_t> dims_masked;
+    // dims_masked.push_back(num_valid_data);
+    // std::vector<Type> buffer(num_valid_data);
     for(int i=0; i<n_vars; i++){
         std::string rdir_prefix = rdata_file_prefix + varlist[i];
         std::string metadata_file = rdir_prefix + "_refactored/metadata.bin";
@@ -234,19 +234,8 @@ void refactor_GE(const std::string data_file_prefix, const std::string rdata_fil
         auto collector = MDR::SquaredErrorCollector<Type>();
         auto writer = MDR::ConcatLevelFileWriter(metadata_file, files);
         auto refactor = generateRefactor<Type>(decomposer, interleaver, encoder, compressor, collector, writer);
-        if(i < 3){
-            int index = 0;
-            for(int j=0; j<num_elements; j++){
-                if(mask[j]){
-                    buffer[index ++] = vars_vec[i][j];
-                }
-            }
-            // std::cout << "index = " << index << std::endl;
-            refactor.refactor(buffer.data(), dims_masked, target_level, num_bitplanes);            
-        } 
-        else{
-            refactor.refactor(vars_vec[i].data(), dims, target_level, num_bitplanes);            
-        }
+        refactor.refactor(vars_vec[i].data(), dims, target_level, num_bitplanes);
+        
     }
 }
 
@@ -333,20 +322,20 @@ void refactor_GE_SZ3_delta(const std::string data_file_prefix, const std::string
     dims.push_back(num_elements);
     // compute masks
     std::vector<unsigned char> mask(num_elements, 0);
-    int num_valid_data = 0;
+    // int num_valid_data = 0;
     for(int i=0; i<num_elements; i++){
         if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
             mask[i] = 1;
-            num_valid_data ++;
+            // num_valid_data ++;
         }
     }
     // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
-    // std::string mask_file = rdata_file_prefix + "mask.bin";
-    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    std::string mask_file = rdata_file_prefix + "mask.bin";
+    writemask(mask_file.c_str(), mask.data(), mask.size());
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec, pressure_vec, density_vec};
-    std::vector<uint32_t> dims_masked;
-    dims_masked.push_back(num_valid_data);
-    std::vector<Type> buffer(num_valid_data);
+    // std::vector<uint32_t> dims_masked;
+    // dims_masked.push_back(num_valid_data);
+    // std::vector<Type> buffer(num_valid_data);
 
     std::vector<double> value_range(n_vars);
     for(int i=0; i<n_vars; i++){
@@ -362,43 +351,18 @@ void refactor_GE_SZ3_delta(const std::string data_file_prefix, const std::string
     }
     for(int i=0; i<n_vars; i++){
         std::string rdir_prefix = rdata_file_prefix + varlist[i];
-        if(i < 3){
-            // use masked refactoring for vx vy vz
-            int index = 0;
-            for(int j=0; j<num_elements; j++){
-                if(mask[j]){
-                    buffer[index ++] = vars_vec[i][j];
-                }
+        std::vector<Type> data_buffer(vars_vec[i]);
+        std::vector<Type> dec_data_buffer(vars_vec[i]);
+        for(int j=0; j<num_snapshot; j++){
+            std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
+            size_t compressed_size = 0;
+            auto compressed_data = SZ3_compress(num_elements, data_buffer.data(), rel_ebs[j]*value_range[i], compressed_size);
+            MGARD::writefile(filename.c_str(), compressed_data, compressed_size);
+            SZ3_decompress(compressed_data, compressed_size, dec_data_buffer.data());
+            for(int i=0; i<num_elements; i++){
+                data_buffer[i] = data_buffer[i] - dec_data_buffer[i];
             }
-            std::vector<Type> data_buffer(buffer);
-            std::vector<Type> dec_data_buffer(buffer);
-            for(int j=0; j<num_snapshot; j++){
-                std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
-                size_t compressed_size = 0;
-                auto compressed_data = SZ3_compress(num_valid_data, data_buffer.data(), rel_ebs[j]*value_range[i], compressed_size);
-                MGARD::writefile(filename.c_str(), compressed_data, compressed_size);
-                SZ3_decompress(compressed_data, compressed_size, dec_data_buffer.data());
-                for(int i=0; i<num_valid_data; i++){
-                    data_buffer[i] = data_buffer[i] - dec_data_buffer[i];
-                }
-                free(compressed_data);
-            }
-            // std::cout << "index = " << index << std::endl;
-        } 
-        else{
-            std::vector<Type> data_buffer(vars_vec[i]);
-            std::vector<Type> dec_data_buffer(vars_vec[i]);
-            for(int j=0; j<num_snapshot; j++){
-                std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
-                size_t compressed_size = 0;
-                auto compressed_data = SZ3_compress(num_elements, data_buffer.data(), rel_ebs[j]*value_range[i], compressed_size);
-                MGARD::writefile(filename.c_str(), compressed_data, compressed_size);
-                SZ3_decompress(compressed_data, compressed_size, dec_data_buffer.data());
-                for(int i=0; i<num_elements; i++){
-                    data_buffer[i] = data_buffer[i] - dec_data_buffer[i];
-                }
-                free(compressed_data);
-            }
+            free(compressed_data);
         }
     }
 }
@@ -538,7 +502,8 @@ void refactor_Vtot_SZ3_delta(uint32_t n1, uint32_t n2, uint32_t n3, const std::s
     }
     // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
     std::string mask_file = rdata_file_prefix + "mask.bin";
-    MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    writemask(mask_file.c_str(), mask.data(), mask.size());
     std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
     std::vector<uint32_t> dims_masked;
     dims_masked.push_back(num_valid_data);
@@ -655,9 +620,9 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
     int target_level = 4;
     uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
 
-    // std::vector<uint32_t> dims_masked;
-    // dims_masked.push_back(num_valid_data);
-    // std::vector<Type> buffer(num_valid_data);
+    std::vector<uint32_t> dims_masked;
+    dims_masked.push_back(num_valid_data);
+    std::vector<Type> buffer(num_valid_data);
     for(int i=0; i<n_variable; i++){
         std::string rdir_prefix = rdata_file_prefix + var_list[i];
         std::string metadata_file = rdir_prefix + "_refactored/metadata.bin";
@@ -675,14 +640,14 @@ void refactor_velocities_1D(const std::string data_file_prefix, const std::strin
         auto writer = MDR::ConcatLevelFileWriter(metadata_file, files);
         auto refactor = generateRefactor<Type>(decomposer, interleaver, encoder, compressor, collector, writer);
         int index = 0;
-        // for(int j=0; j<num_elements; j++){
-        //     if(mask[j]){
-        //         buffer[index ++] = vars_vec[i][j];
-        //     }
-        // }
+        for(int j=0; j<num_elements; j++){
+            if(mask[j]){
+                buffer[index ++] = vars_vec[i][j];
+            }
+        }
         // std::cout << "index = " << index << std::endl;
-        // refactor.refactor(buffer.data(), dims_masked, target_level, num_bitplanes);            
-        refactor.refactor(vars_vec[i].data(), dims, target_level, num_bitplanes);
+        refactor.refactor(buffer.data(), dims_masked, target_level, num_bitplanes);            
+        // refactor.refactor(vars_vec[i].data(), dims, target_level, num_bitplanes);
     }
 }
 
@@ -746,14 +711,14 @@ void refactor_velocities_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::st
     uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
     std::vector<uint32_t> dims = {n1, n2, n3};
 
-    // std::vector<unsigned char> mask(num_elements, 0);
-    // for(int i=0; i<num_elements; i++){
-    //     if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
-    //         mask[i] = 1;
-    //     }
-    // }
-    // std::string mask_file = rdata_file_prefix + dataset + "_mask.bin";
-    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    std::vector<unsigned char> mask(num_elements, 0);
+    for(int i=0; i<num_elements; i++){
+        if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
+            mask[i] = 1;
+        }
+    }
+    std::string mask_file = rdata_file_prefix + "mask.bin";
+    writemask(mask_file.c_str(), mask.data(), mask.size());
 
     for(int i=0; i<n_variable; i++){
         std::string rdir_prefix = rdata_file_prefix + var_list[i];
@@ -775,5 +740,152 @@ void refactor_velocities_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::st
     }
 }
 
+template<class Type>
+void refactor_velocities_3D_JHTDB(uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
+    size_t num_elements = 0;
+    auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityX.dat").c_str(), num_elements);
+    auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
+    auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
+    std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
+    std::vector<std::string> var_list = {"VelocityX", "VelocityY", "VelocityZ"};
+    int n_variable = var_list.size();
+
+    int target_level = 4;
+    uint8_t num_bitplanes = std::is_same<Type, double>::value ? 60 : 32;
+    std::vector<uint32_t> dims = {n1, n2, n3};
+
+    for(int i=0; i<n_variable; i++){
+        std::string rdir_prefix = rdata_file_prefix + var_list[i];
+        std::string metadata_file = rdir_prefix + "_refactored/metadata.bin";
+        std::vector<std::string> files;
+        int num_levels = target_level + 1;
+        for(int i=0; i<num_levels; i++){
+            std::string filename = rdir_prefix + "_refactored/level_" + std::to_string(i) + ".bin";
+            files.push_back(filename);
+        }
+        auto decomposer = MDR::MGARDHierarchicalDecomposer<Type>();
+        auto interleaver = MDR::DirectInterleaver<Type>();
+        auto encoder = MDR::PerBitBPEncoder<Type, uint32_t>();
+        auto compressor = MDR::AdaptiveLevelCompressor(64);
+        auto collector = MDR::SquaredErrorCollector<Type>();
+        auto writer = MDR::ConcatLevelFileWriter(metadata_file, files);
+        auto refactor = generateRefactor<Type>(decomposer, interleaver, encoder, compressor, collector, writer);
+        refactor.refactor(vars_vec[i].data(), dims, target_level, num_bitplanes);  
+    }
+}
+
+template<class Type>
+void refactor_Vtot_SZ3_delta_3D(uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
+    size_t num_elements = 0;
+    const int n_vars = 3;
+    auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityX.dat").c_str(), num_elements);
+    auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
+    auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
+    // compute masks
+    std::vector<unsigned char> mask(num_elements, 0);
+    // int num_valid_data = 0;
+    for(int i=0; i<num_elements; i++){
+        if(velocityX_vec[i]*velocityX_vec[i] + velocityY_vec[i]*velocityY_vec[i] + velocityZ_vec[i]*velocityZ_vec[i] != 0){            
+            mask[i] = 1;
+            // num_valid_data ++;
+        }
+    }
+    // std::cout << "num_elements = " << num_elements << ", num_valid_data = " << num_valid_data << std::endl;
+    std::string mask_file = rdata_file_prefix + "mask.bin";
+    // MGARD::writefile(mask_file.c_str(), mask.data(), mask.size());
+    writemask(mask_file.c_str(), mask.data(), mask.size());
+    std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
+    // std::vector<uint32_t> dims_masked;
+    // dims_masked.push_back(num_valid_data);
+    std::vector<Type> buffer(num_elements);
+
+    std::vector<double> value_range(n_vars);
+    for(int i=0; i<n_vars; i++){
+        value_range[i] = compute_vr(vars_vec[i]);
+        // std::cout << "value_range = " << value_range[i] << std::endl;
+    }    
+    std::vector<double> rel_ebs;
+    const int num_snapshot = 18;
+    double eb = 1.0;
+    for(int i=0; i<num_snapshot; i++){
+        eb /= 10;
+        rel_ebs.push_back(eb);
+    }
+    for(int i=0; i<n_vars; i++){
+        std::string rdir_prefix = rdata_file_prefix + varlist[i];
+        // use masked refactoring for vx vy vz
+        // int index = 0;
+        // for(int j=0; j<num_elements; j++){
+        //     if(mask[j]){
+        //         buffer[index ++] = vars_vec[i][j];
+        //     }
+        // }
+        std::vector<Type> data_buffer(vars_vec[i]);
+        std::vector<Type> dec_data_buffer(vars_vec[i]);
+        for(int j=0; j<num_snapshot; j++){
+            std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
+            size_t compressed_size = 0;
+            auto compressed_data = SZ3_compress_3D(num_elements, n1, n2, n3, data_buffer.data(), rel_ebs[j]*value_range[i], compressed_size);
+            MGARD::writefile(filename.c_str(), compressed_data, compressed_size);
+            SZ3_decompress(compressed_data, compressed_size, dec_data_buffer.data());
+            for(int i=0; i<num_elements; i++){
+                data_buffer[i] = data_buffer[i] - dec_data_buffer[i];
+            }
+            free(compressed_data);
+        }
+        // std::cout << "index = " << index << std::endl;
+    }
+}
+
+template<class Type>
+void refactor_Vtot_SZ3_delta_3D_JHTDB(uint32_t n1, uint32_t n2, uint32_t n3, const std::string data_file_prefix, const std::string rdata_file_prefix){
+    size_t num_elements = 0;
+    const int n_vars = 3;
+    auto velocityX_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityX.dat").c_str(), num_elements);
+    auto velocityY_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityY.dat").c_str(), num_elements);
+    auto velocityZ_vec = MGARD::readfile<Type>((data_file_prefix + "VelocityZ.dat").c_str(), num_elements);
+    
+    std::vector<std::vector<Type>> vars_vec = {velocityX_vec, velocityY_vec, velocityZ_vec};
+    // std::vector<uint32_t> dims_masked;
+    // dims_masked.push_back(num_valid_data);
+    std::vector<Type> buffer(num_elements);
+
+    std::vector<double> value_range(n_vars);
+    for(int i=0; i<n_vars; i++){
+        value_range[i] = compute_vr(vars_vec[i]);
+        // std::cout << "value_range = " << value_range[i] << std::endl;
+    }    
+    std::vector<double> rel_ebs;
+    const int num_snapshot = 18;
+    double eb = 1.0;
+    for(int i=0; i<num_snapshot; i++){
+        eb /= 10;
+        rel_ebs.push_back(eb);
+    }
+    for(int i=0; i<n_vars; i++){
+        std::string rdir_prefix = rdata_file_prefix + varlist[i];
+        // use masked refactoring for vx vy vz
+        // int index = 0;
+        // for(int j=0; j<num_elements; j++){
+        //     if(mask[j]){
+        //         buffer[index ++] = vars_vec[i][j];
+        //     }
+        // }
+        std::vector<Type> data_buffer(vars_vec[i]);
+        std::vector<Type> dec_data_buffer(vars_vec[i]);
+        for(int j=0; j<num_snapshot; j++){
+            std::string filename = rdir_prefix + "_refactored/SZ3_delta_eb_" + std::to_string(j) + ".bin";
+            size_t compressed_size = 0;
+            auto compressed_data = SZ3_compress_3D(num_elements, n1, n2, n3, data_buffer.data(), rel_ebs[j]*value_range[i], compressed_size);
+            MGARD::writefile(filename.c_str(), compressed_data, compressed_size);
+            SZ3_decompress(compressed_data, compressed_size, dec_data_buffer.data());
+            for(int i=0; i<num_elements; i++){
+                data_buffer[i] = data_buffer[i] - dec_data_buffer[i];
+            }
+            free(compressed_data);
+        }
+        // std::cout << "index = " << index << std::endl;
+    }
+}
 }
 #endif

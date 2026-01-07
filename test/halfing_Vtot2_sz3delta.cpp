@@ -22,63 +22,63 @@ double * D_dec = NULL;
 double * Vx_dec = NULL;
 double * Vy_dec = NULL;
 double * Vz_dec = NULL;
-double * V_TOT_ori = NULL;
-std::vector<double> error_V_TOT;
-std::vector<double> error_est_V_TOT;
+double * V_TOT2_ori = NULL;
+std::vector<double> error_V_TOT2;
+std::vector<double> error_est_V_TOT2;
 
 
 template<class T>
-bool halfing_error_V_TOT_uniform(const T * Vx, const T * Vy, const T * Vz, size_t n, const std::vector<unsigned char>& mask, const double tau, std::vector<double>& ebs){
+bool halfing_error_V_TOT2_uniform(const T * Vx, const T * Vy, const T * Vz, size_t n, const std::vector<unsigned char>& mask, const T tau, std::vector<T>& ebs){
 	double eb_Vx = ebs[0];
 	double eb_Vy = ebs[1];
 	double eb_Vz = ebs[2];
 	double max_value = 0;
 	int max_index = 0;
+	// int weight_index = 0;
+	// int max_weight_index = 0;
 	for(int i=0; i<n; i++){
 		// error of total velocity square
 		double e_V_TOT_2 = 0;
 		if(mask[i]) e_V_TOT_2 = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
 		double V_TOT_2 = Vx[i]*Vx[i] + Vy[i]*Vy[i] + Vz[i]*Vz[i];
 		// error of total velocity
-		double e_V_TOT = 0;
-		if(mask[i]) e_V_TOT = compute_bound_square_root_x(V_TOT_2, e_V_TOT_2);
-		double V_TOT = sqrt(V_TOT_2);
+		// T e_V_TOT = 0;
 		// print_error("V_TOT", V_TOT, V_TOT_ori[i], e_V_TOT);
 
-		error_est_V_TOT[i] = e_V_TOT;
-		error_V_TOT[i] = V_TOT - V_TOT_ori[i];
+		error_est_V_TOT2[i] = e_V_TOT_2;
+		error_V_TOT2[i] = V_TOT_2 - V_TOT2_ori[i];
 
-		if(max_value < error_est_V_TOT[i]){
-			max_value = error_est_V_TOT[i];
+		if(max_value < error_est_V_TOT2[i]){
+			max_value = error_est_V_TOT2[i];
 			max_index = i;
+			// max_weight_index = weight_index;
 		}
-
+		// if(mask[i]) weight_index++;
 	}
-	// std::cout << names[0] << ": max estimated error = " << max_value << ", index = " << max_index << std::endl;
+	// std::cout << names[0] << ": max estimated error = " << max_value << ", index = " << max_index << ", e_V_TOT_2 = " << max_e_V_TOT_2 << ", VTOT_2 = " << max_V_TOT_2 << ", Vx = " << max_Vx << ", Vy = " << max_Vy << ", Vz = " << max_Vz << std::endl;
 	// estimate error bound based on maximal errors
 	if(max_value > tau){
 		// estimate
 		auto i = max_index;
 		double estimate_error = max_value;
 		double V_TOT_2 = Vx[i]*Vx[i] + Vy[i]*Vy[i] + Vz[i]*Vz[i];
-		double V_TOT = sqrt(V_TOT_2);
 		double eb_Vx = ebs[0];
 		double eb_Vy = ebs[1];
 		double eb_Vz = ebs[2];
 		while(estimate_error > tau){
-			// change error bound
     		// std::cout << "uniform decrease\n";
+    		// std::cout << "uniform decrease, eb_Vx / ebs[0] = " << eb_Vx / ebs[0] << std::endl;
 			eb_Vx = eb_Vx / 1.5;
 			eb_Vy = eb_Vy / 1.5;
-			eb_Vz = eb_Vz / 1.5; 							        		
-			double e_V_TOT_2 = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
-			estimate_error = compute_bound_square_root_x(V_TOT_2, e_V_TOT_2);
+			eb_Vz = eb_Vz / 1.5;		        		
+			estimate_error = compute_bound_x_square(Vx[i], eb_Vx) + compute_bound_x_square(Vy[i], eb_Vy) + compute_bound_x_square(Vz[i], eb_Vz);
 		}
 		ebs[0] = eb_Vx;
 		ebs[1] = eb_Vy;
 		ebs[2] = eb_Vz;
 		return false;
 	}
+	
 	return true;
 }
 
@@ -111,10 +111,10 @@ int main(int argc, char** argv){
 
 	err = clock_gettime(CLOCK_REALTIME, &start);
 
-    std::vector<T> V_TOT(num_elements);
-    compute_VTOT(Vx_ori.data(), Vy_ori.data(), Vz_ori.data(), num_elements, V_TOT.data());
-	V_TOT_ori = V_TOT.data();
-    double tau = compute_value_range(V_TOT)*target_rel_eb;
+    std::vector<T> V_TOT2(num_elements);
+    compute_VTOT2(Vx_ori.data(), Vy_ori.data(), Vz_ori.data(), num_elements, V_TOT2.data());
+	V_TOT2_ori = V_TOT2.data();
+    double tau = compute_value_range(V_TOT2)*target_rel_eb;
 
     std::string mask_file = rdata_file_prefix + "mask.bin";
     uint32_t mask_file_size = 0;
@@ -164,16 +164,16 @@ int main(int argc, char** argv){
 	    // MGARD::print_statistics(Vx_ori.data(), Vx_dec, num_elements);
 	    // MGARD::print_statistics(Vy_ori.data(), Vy_dec, num_elements);
 	    // MGARD::print_statistics(Vz_ori.data(), Vz_dec, num_elements);
-	    error_V_TOT = std::vector<double>(num_elements);
-	    error_est_V_TOT = std::vector<double>(num_elements);
+	    error_V_TOT2 = std::vector<double>(num_elements);
+	    error_est_V_TOT2 = std::vector<double>(num_elements);
 		// std::cout << "iter" << iter << ": The old ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
-	    tolerance_met = halfing_error_V_TOT_uniform(Vx_dec, Vy_dec, Vz_dec, num_elements, mask, tau, ebs);
+	    tolerance_met = halfing_error_V_TOT2_uniform(Vx_dec, Vy_dec, Vz_dec, num_elements, mask, tau, ebs);
 		// std::cout << "iter" << iter << ": The new ebs are:" << std::endl;
 	    // MDR::print_vec(ebs);
 	    // std::cout << names[0] << " requested error = " << tau << std::endl;
-	    max_est_error = print_max_abs(names[0] + " error_est", error_est_V_TOT); 
-	    max_act_error = print_max_abs(names[0] + " actual error", error_V_TOT);
+	    max_est_error = print_max_abs(names[0] + " error_est", error_est_V_TOT2); 
+	    max_act_error = print_max_abs(names[0] + " actual error", error_V_TOT2);
     }
 	err = clock_gettime(CLOCK_REALTIME, &end);
 	elapsed_time = (double)(end.tv_sec - start.tv_sec) + (double)(end.tv_nsec - start.tv_nsec)/(double)1000000000;

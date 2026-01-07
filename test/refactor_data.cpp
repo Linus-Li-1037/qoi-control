@@ -31,25 +31,35 @@ int main(int argc, char** argv){
         // refactor_GE_SZ3<T>(data_file_prefix, rdata_file_prefix);
         else refactor_GE_SZ3_delta<T>(data_file_prefix, rdata_file_prefix);
     }
-    else if(data == "NYX" || data == "Hurricane" || data == "SCALE" || data == "Miranda" || data == "S3D"){
+    else if(data == "NYX" || data == "Hurricane" || data == "SCALE" || data == "Miranda" || data == "S3D" || data == "Nek5000" || data == "JHTDB_3GB" || data == "JHTDB_1.5GB"){
         if (mode == 1){
             refactor_velocities_1D<T>(data_file_prefix, rdata_file_prefix);
         }
         else if (mode == 3){
             if(data == "Hurricane"){
-                refactor_Vtot_SZ3_delta<T>(100, 500, 500, data_file_prefix, rdata_file_prefix);
+                refactor_Vtot_SZ3_delta_3D<T>(100, 500, 500, data_file_prefix, rdata_file_prefix);
             }
             else if(data == "NYX"){
-                refactor_Vtot_SZ3_delta<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
+                refactor_Vtot_SZ3_delta_3D<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
             }
             else if(data == "SCALE"){
-                refactor_Vtot_SZ3_delta<T>(98, 1200, 1200, data_file_prefix, rdata_file_prefix);
+                refactor_Vtot_SZ3_delta_3D<T>(98, 1200, 1200, data_file_prefix, rdata_file_prefix);
             }
             else if(data == "Miranda"){
-                refactor_Vtot_SZ3_delta<T>(256, 384, 384, data_file_prefix, rdata_file_prefix);
+                refactor_Vtot_SZ3_delta_3D<T>(256, 384, 384, data_file_prefix, rdata_file_prefix);
             }
             else if(data == "S3D"){
-                refactor_Vtot_SZ3_delta<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
+                // refactor_Vtot_SZ3_delta_3D<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
+                refactor_S3D_SZ3_delta<T>(1200, 334, 200, data_file_prefix, data_prefix_path);
+            }
+            else if(data == "Nek5000"){
+                refactor_Vtot_SZ3_delta_3D<T>(510, 510, 510, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "JHTDB_3GB"){
+                refactor_Vtot_SZ3_delta_3D<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "JHTDB_1.5GB"){
+                refactor_Vtot_SZ3_delta_3D<T>(256, 512, 512, data_file_prefix, rdata_file_prefix);
             }
         }
         else if (mode == 2){
@@ -66,7 +76,17 @@ int main(int argc, char** argv){
                 refactor_velocities_3D<T>(256, 384, 384, data_file_prefix, rdata_file_prefix);
             }
             else if(data == "S3D"){
-                refactor_velocities_3D<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
+                // refactor_velocities_3D<T>(500, 500, 500, data_file_prefix, rdata_file_prefix);
+                refactor_S3D<T>(1200, 334, 200, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "Nek5000"){
+                refactor_velocities_3D<T>(510, 510, 510, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "JHTDB_3GB"){
+                refactor_velocities_3D<T>(512, 512, 512, data_file_prefix, rdata_file_prefix);
+            }
+            else if(data == "JHTDB_1.5GB"){
+                refactor_velocities_3D<T>(256, 512, 512, data_file_prefix, rdata_file_prefix);
             }
         }
     }
